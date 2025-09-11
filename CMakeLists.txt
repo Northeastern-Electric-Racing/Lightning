@@ -21,12 +21,21 @@ endif()
 # Set the project name
 set(CMAKE_PROJECT_NAME Lightning)
 
+# Include toolchain file
+include("cmake/gcc-arm-none-eabi.cmake")
+
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
+
+# Display ASCII art at start of build
+if(EXISTS "${CMAKE_SOURCE_DIR}/art")
+    file(READ "${CMAKE_SOURCE_DIR}/art" ASCII_ART)
+    message("${ASCII_ART}")
+endif()
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
@@ -57,8 +66,10 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
 )
 
-# Remove wrong libob.a library dependency when using cpp files
-list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
+# Compiler options
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+    -Wno-unused-parameter # u_TODO - this doesn't seem to be working
+)
 
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}

@@ -22,7 +22,6 @@ void default_thread(ULONG thread_input) {
 
         /* Kick the watchdogs (sad) )*/
         HAL_IWDG_Refresh(&hiwdg); // Internal Watchdog
-        HAL_GPIO_TogglePin(WATCHDOG_GPIO_Port, WATCHDOG_Pin); // External Watchdog
 
         /* Sleep Thread for specified number of ticks. */
         tx_thread_sleep(_default_thread.sleep);
@@ -117,8 +116,9 @@ static uint8_t _create_thread(TX_BYTE_POOL *byte_pool, thread_t *thread) {
 uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
 
     /* Create Threads */
-    CATCH_ERROR(_create_thread(byte_pool, &_default_thread), U_SUCCESS);  // Create Default thread.
-    CATCH_ERROR(_create_thread(byte_pool, &_can_thread), U_SUCCESS);      // Create CAN thread.
+    CATCH_ERROR(_create_thread(byte_pool, &_default_thread), U_SUCCESS);          // Create Default thread.
+    CATCH_ERROR(_create_thread(byte_pool, &can_incoming_thread), U_SUCCESS);      // Create CAN Incoming thread.
+    CATCH_ERROR(_create_thread(byte_pool, &can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
     // add more threads here if necessary
 
     DEBUG_PRINTLN("Ran threads_init().");

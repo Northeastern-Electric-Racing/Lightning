@@ -1,7 +1,6 @@
 #include "u_queues.h"
 #include "u_can.h"
 #include "u_general.h"
-#include "u_faults.h"
 #include <stdio.h>
 
 /* 

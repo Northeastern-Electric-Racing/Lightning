@@ -57,6 +57,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "./Core/Src/u_inbox.c"
     "./Core/Src/u_faults.c"
+    "./Core/Src/u_sensors.c"
     "./Core/Src/u_threads.c"
     "./Core/Src/u_statemachine.c"
     "./Core/Src/u_queues.c"

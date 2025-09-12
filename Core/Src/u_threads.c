@@ -88,6 +88,10 @@ void can_outgoing_thread(ULONG thread_input) {
     }
 }
 
+static uint32_t lightning_sensor_value;
+static uint32_t imu_value;
+static uint32_t magnetometer_value;
+
 /* Sensors Thread. Reads sensors's information. */
 static thread_t _sensors_thread = {
     .name       = "Sensors Thread",          /* Name */
@@ -100,11 +104,16 @@ static thread_t _sensors_thread = {
     .function   = sensors_thread             /* Thread Function */
 };
 void sensors_thread(ULONG thread_input) {
+    
     while (1) {
 
-        queue_send(&can_outgoing, read_lightning_sensor());
-        queue_send(&can_outgoing, read_imu());
-        queue_send(&can_outgoing, read_magnetometer());
+        lightning_sensor_value = read_lightning_sensor();
+        imu_value = read_imu();
+        magnetometer_value = read_magnetometer();
+        
+        queue_send(&can_outgoing, &lightning_sensor_value);
+        queue_send(&can_outgoing, &imu_value);
+        queue_send(&can_outgoing, &magnetometer_value);
 
         tx_thread_sleep(_sensors_thread.sleep);
     }
@@ -139,9 +148,10 @@ static uint8_t _create_thread(TX_BYTE_POOL *byte_pool, thread_t *thread) {
 uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
 
     /* Create Threads */
-    CATCH_ERROR(_create_thread(byte_pool, &_default_thread), U_SUCCESS);          // Create Default thread.
-    CATCH_ERROR(_create_thread(byte_pool, &can_incoming_thread), U_SUCCESS);      // Create CAN Incoming thread.
-    CATCH_ERROR(_create_thread(byte_pool, &can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
+    CATCH_ERROR(_create_thread(byte_pool, &_default_thread), U_SUCCESS);           // Create Default thread.
+    CATCH_ERROR(_create_thread(byte_pool, &_can_incoming_thread), U_SUCCESS);      // Create CAN Incoming thread.
+    CATCH_ERROR(_create_thread(byte_pool, &_can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
+    CATCH_ERROR(_create_thread(byte_pool, &_sensors_thread), U_SUCCESS);           // Create Sensor Thread
     // add more threads here if necessary
 
     DEBUG_PRINTLN("Ran threads_init().");

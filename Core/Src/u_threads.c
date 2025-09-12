@@ -3,6 +3,7 @@
 #include "u_queues.h"
 #include "u_inbox.h"
 #include "u_can.h"
+#include "u_sensors.h"
 #include "bitstream.h"
 
 /* Default Thread */
@@ -84,6 +85,28 @@ void can_outgoing_thread(ULONG thread_input) {
 
         /* Sleep Thread for specified number of ticks. */
         tx_thread_sleep(_can_outgoing_thread.sleep);
+    }
+}
+
+/* Sensors Thread. Reads sensors's information. */
+static thread_t _sensors_thread = {
+    .name       = "Sensors Thread",          /* Name */
+    .size       = 512,                       /* Stack Size (in bytes) */
+    .priority   = 9,                         /* Priority */
+    .threshold  = 9,                         /* Preemption Threshold */
+    .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
+    .auto_start = TX_AUTO_START,             /* Auto Start */
+    .sleep      = 500,                       /* Sleep (in ticks) */
+    .function   = sensors_thread             /* Thread Function */
+};
+void sensors_thread(ULONG thread_input) {
+    while (1) {
+
+        queue_send(&can_outgoing, read_lightning_sensor());
+        queue_send(&can_outgoing, read_imu());
+        queue_send(&can_outgoing, read_magnetometer());
+
+        tx_thread_sleep(_sensors_thread.sleep);
     }
 }
 

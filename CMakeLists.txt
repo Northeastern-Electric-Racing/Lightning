@@ -54,11 +54,23 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    "./Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
+    "./Core/Src/u_inbox.c"
+    "./Core/Src/u_threads.c"
+    "./Core/Src/u_queues.c"
+    "./Core/Src/u_can.c"
+    "./Core/Src/u_general.c"
+    "./Drivers/Embedded-Base/middleware/src/bitstream.c"
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    "./Drivers/Embedded-Base/general/include/"
+    "./Drivers/Embedded-Base/middleware/include/"
+    "./Drivers/Embedded-Base/platforms/stm32h563/include/"
+    "./NetXDuo"
+    "./Core/Inc/"
 )
 
 # Add project symbols (macros)

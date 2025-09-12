@@ -42,6 +42,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern IWDG_HandleTypeDef hiwdg;
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

@@ -7,7 +7,7 @@
 uint8_t can1_init(FDCAN_HandleTypeDef *hcan);
 
 /* List of CAN interfaces */
-extern can_t can1;
+extern can_t can2;
 
 /* List of CAN IDs */
 #define BMS_ALIVE_CAN_ID  0x1 /* TODO: Replace with actual */

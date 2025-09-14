@@ -5,6 +5,7 @@
 #include "u_can.h"
 #include "u_sensors.h"
 #include "bitstream.h"
+#include "u_statemachine.h"
 
 /* Default Thread */
 static thread_t _default_thread = {
@@ -119,6 +120,43 @@ void sensors_thread(ULONG thread_input) {
     }
 }
 
+/* GPIO Lights */
+static thread_t _gpio_lights_thread = {
+    .name       = "GPIO Lights",             /* Name */
+    .size       = 512,                       /* Stack Size (in bytes) */
+    .priority   = 5,                         /* Priority */
+    .threshold  = 9,                         /* Preemption Threshold */
+    .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
+    .auto_start = TX_AUTO_START,             /* Auto Start */
+    .sleep      = 500,                       /* Sleep (in ticks) */
+    .function   = gpio_lights_thread         /* Thread Function */
+};
+void gpio_lights_thread(ULONG thread_input) {
+    
+    while (1) {
+
+        state_t state = get_current_state();
+
+        if (state == CAR_STABLE) {
+            // TODO: GPIO GREEN
+            HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+            return;
+        }
+
+        if (state == CAR_FAULTED) {
+            HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+            return;
+        }
+
+        HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+
+        tx_thread_sleep(_gpio_lights_thread.sleep);
+    }
+}
+
 /* Helper function. Creates a ThreadX thread. */
 static uint8_t _create_thread(TX_BYTE_POOL *byte_pool, thread_t *thread) {
     CHAR *pointer;
@@ -151,7 +189,8 @@ uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
     CATCH_ERROR(_create_thread(byte_pool, &_default_thread), U_SUCCESS);           // Create Default thread.
     CATCH_ERROR(_create_thread(byte_pool, &_can_incoming_thread), U_SUCCESS);      // Create CAN Incoming thread.
     CATCH_ERROR(_create_thread(byte_pool, &_can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
-    CATCH_ERROR(_create_thread(byte_pool, &_sensors_thread), U_SUCCESS);           // Create Sensor Thread
+    CATCH_ERROR(_create_thread(byte_pool, &_sensors_thread), U_SUCCESS);           // Create Sensor thread.
+    CATCH_ERROR(_create_thread(byte_pool, &_gpio_lights_thread), U_SUCCESS);       // Create GPIO Lights thread.
     // add more threads here if necessary
 
     DEBUG_PRINTLN("Ran threads_init().");

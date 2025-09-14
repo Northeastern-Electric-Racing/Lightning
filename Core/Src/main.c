@@ -166,7 +166,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Init CAN */
-  can1_init(&hfdcan1);
+  can2_init(&hfdcan2);
 
   /* USER CODE END 2 */
 

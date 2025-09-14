@@ -79,7 +79,7 @@ void can_outgoing_thread(ULONG thread_input) {
         while(queue_receive(&can_outgoing, &message) == U_SUCCESS) {
             status = can_send_msg(&can2, &message);
             if(status != U_SUCCESS) {
-                DEBUG_PRINTLN("WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld).", message.id);
+                DEBUG_PRINTLN("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
                 // u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
                 }
         }

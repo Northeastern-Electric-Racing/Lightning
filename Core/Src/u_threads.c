@@ -6,6 +6,7 @@
 #include "u_sensors.h"
 #include "bitstream.h"
 #include "u_statemachine.h"
+#include "u_mutexes.h"
 
 /* Default Thread */
 static thread_t _default_thread = {
@@ -134,24 +135,31 @@ static thread_t _gpio_lights_thread = {
 void gpio_lights_thread(ULONG thread_input) {
     
     while (1) {
+        int status = mutex_get(&state_machine_mutex);
 
-        state_t state = get_current_state();
+        if (status == TX_SUCCESS) {
+            state_t state = get_current_state();
 
-        if (state == CAR_STABLE) {
-            // TODO: GPIO GREEN
-            HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-            return;
-        }
+            if (state == CAR_STABLE) {
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                return;
+            }
 
-        if (state == CAR_FAULTED) {
+            if (state == CAR_FAULTED) {
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                return;
+            }
+
             HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
-            return;
-        }
+            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
 
-        HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+            mutex_put(&state_machine_mutex);
+        }
+        else {
+            DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        }
 
         tx_thread_sleep(_gpio_lights_thread.sleep);
     }

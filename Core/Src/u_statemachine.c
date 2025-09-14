@@ -20,7 +20,7 @@ static uint8_t _imu_alive(uint8_t *data) {
     imd_alive = true;
 
     if (bms_alive && imd_alive) {
-        current_state = CAR_READY;
+        current_state = (state_t) CAR_READY;
     }
 
     return U_SUCCESS;
@@ -31,7 +31,7 @@ static uint8_t _stable(uint8_t *data) {
         return U_ERROR;
     }
 
-    current_state = STABLE;
+    current_state = (state_t) STABLE;
 
     return U_SUCCESS;
 }
@@ -41,7 +41,7 @@ static uint8_t _fault(uint8_t *data) {
         return U_ERROR;
     }
 
-    current_state = FAULT;
+    current_state = (state_t) FAULT;
 
     return U_SUCCESS;
 }
@@ -51,7 +51,7 @@ uint8_t statemachine_process_event(event_t event, uint8_t *data) {
 
     if(status != TX_SUCCESS) {
         DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex mutex. (Status: %d/%s).", status, tx_status_toString(status));
-        return;
+        return U_ERROR;
     }
 
     switch (event) {
@@ -75,7 +75,7 @@ state_t get_current_state() {
 
     if(status != TX_SUCCESS) {
         DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex mutex. (Status: %d/%s).", status, tx_status_toString(status));
-        return;
+        return -1;
     }
 
     state_t state = current_state;

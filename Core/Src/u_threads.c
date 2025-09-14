@@ -134,24 +134,26 @@ static thread_t _gpio_lights_thread = {
 void gpio_lights_thread(ULONG thread_input) {
     
     while (1) {
-
         state_t state = get_current_state();
 
-        if (state == CAR_STABLE) {
-            // TODO: GPIO GREEN
-            HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-            return;
-        }
+        // State being -1 means state machine mutex is in use; None of the logic gets done
+        if (state == -1) {
+            if (state == CAR_STABLE) {
+                // TODO: GPIO GREEN
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                return;
+            }
 
-        if (state == CAR_FAULTED) {
+            if (state == CAR_FAULTED) {
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                return;
+            }
+
             HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
-            return;
+            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
         }
-
-        HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
 
         tx_thread_sleep(_gpio_lights_thread.sleep);
     }

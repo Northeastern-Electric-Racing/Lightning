@@ -50,7 +50,7 @@ uint8_t statemachine_process_event(event_t event, uint8_t *data) {
     int status = mutex_get(&state_machine_mutex);
 
     if(status != TX_SUCCESS) {
-        DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
         return U_ERROR;
     }
 
@@ -71,16 +71,5 @@ uint8_t statemachine_process_event(event_t event, uint8_t *data) {
 }
 
 state_t get_current_state() {
-    int status = mutex_get(&state_machine_mutex);
-
-    if(status != TX_SUCCESS) {
-        DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex mutex. (Status: %d/%s).", status, tx_status_toString(status));
-        return -1;
-    }
-
-    state_t state = current_state;
-
-    mutex_put(&state_machine_mutex);
-
-    return state;
+    return current_state;
 }

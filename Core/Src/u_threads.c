@@ -139,15 +139,21 @@ void gpio_lights_thread(ULONG thread_input) {
 
         if (state == CAR_STABLE) {
             // TODO: GPIO GREEN
+            //HAL_GPIO_WritePin(GREEN_Pin, GREEN_GPIO_Port, 1);
+            //HAL_GPIO_WritePin(RED_Pin, RED_GPIO_Port, 0);
             return;
         }
 
         if (state == CAR_FAULTED) {
             // TODO: GPIO RED
+            //HAL_GPIO_WritePin(GREEN_Pin, GREEN_GPIO_Port, 0);
+            //HAL_GPIO_WritePin(RED_Pin, RED_GPIO_Port, 1);
             return;
         }
 
         // TODO: Reset GPIO
+        //HAL_GPIO_WritePin(GREEN_Pin, GREEN_GPIO_Port, 0);
+        //HAL_GPIO_WritePin(RED_Pin, RED_GPIO_Port, 0);
 
         tx_thread_sleep(_gpio_lights_thread.sleep);
     }

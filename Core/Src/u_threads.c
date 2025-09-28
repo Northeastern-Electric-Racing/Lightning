@@ -16,7 +16,7 @@ static thread_t _default_thread = {
         .threshold  = 9,                 /* Preemption Threshold */
         .time_slice = TX_NO_TIME_SLICE,  /* Time Slice */
         .auto_start = TX_AUTO_START,     /* Auto Start */
-        .sleep      = 500,               /* Sleep (in ticks) */
+        .sleep      = 10,               /* Sleep (in ticks) */
         .function   = default_thread     /* Thread Function */
     };
 void default_thread(ULONG thread_input) {
@@ -39,7 +39,7 @@ static thread_t _can_incoming_thread = {
         .threshold  = 9,                         /* Preemption Threshold */
         .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
         .auto_start = TX_AUTO_START,             /* Auto Start */
-        .sleep      = 500,                       /* Sleep (in ticks) */
+        .sleep      = 10,                       /* Sleep (in ticks) */
         .function   = can_incoming_thread        /* Thread Function */
     };
 void can_incoming_thread(ULONG thread_input) {
@@ -66,7 +66,7 @@ static thread_t _can_outgoing_thread = {
     .threshold  = 9,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
     .auto_start = TX_AUTO_START,             /* Auto Start */
-    .sleep      = 500,                       /* Sleep (in ticks) */
+    .sleep      = 10,                       /* Sleep (in ticks) */
     .function   = can_outgoing_thread        /* Thread Function */
 };
 void can_outgoing_thread(ULONG thread_input) {

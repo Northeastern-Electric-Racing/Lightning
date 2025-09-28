@@ -1,7 +1,7 @@
 #ifndef __STATEMACHINE_H
 #define __STATEMACHINE_H
 
-#include "u_general.h"
+#include "u_tx_debug.h"
 #include <stdint.h>
 #include <stdio.h>
 

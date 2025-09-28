@@ -55,6 +55,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "./Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
+    "./Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
+    "./Drivers/Embedded-Base/threadX/src/u_tx_mutex.c"
+    "./Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
+    "./Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
     "./Core/Src/u_inbox.c"
     "./Core/Src/u_faults.c"
     "./Core/Src/u_sensors.c"
@@ -63,7 +67,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Core/Src/u_queues.c"
     "./Core/Src/u_can.c"
     "./Core/Src/u_mutexes.c"
-    "./Core/Src/u_general.c"
     "./Drivers/Embedded-Base/middleware/src/bitstream.c"
 )
 
@@ -73,6 +76,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "./Drivers/Embedded-Base/general/include/"
     "./Drivers/Embedded-Base/middleware/include/"
     "./Drivers/Embedded-Base/platforms/stm32h563/include/"
+    "./Drivers/Embedded-Base/threadX/inc/"
     "./NetXDuo"
     "./Core/Inc/"
 )

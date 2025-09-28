@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "u_can.h"
-#include "u_general.h"
+#include "u_tx_debug.h"
 #include "stm32h5xx_hal.h"
 
 

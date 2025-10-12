@@ -66,16 +66,8 @@ void Error_Handler(void);
 #define RED_GPIO_Port GPIOE
 #define GREEN_Pin GPIO_PIN_5
 #define GREEN_GPIO_Port GPIOE
-#define ETH_IRQ_Pin GPIO_PIN_6
-#define ETH_IRQ_GPIO_Port GPIOE
 #define IMU_INT1_Pin GPIO_PIN_13
 #define IMU_INT1_GPIO_Port GPIOC
-#define ETH_RESET__Pin GPIO_PIN_0
-#define ETH_RESET__GPIO_Port GPIOF
-#define ETH_GPIO_Pin GPIO_PIN_1
-#define ETH_GPIO_GPIO_Port GPIOF
-#define ETH_RX_ER_Pin GPIO_PIN_2
-#define ETH_RX_ER_GPIO_Port GPIOF
 
 /* USER CODE BEGIN Private defines */
 

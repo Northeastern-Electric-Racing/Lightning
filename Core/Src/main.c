@@ -30,6 +30,7 @@
 #include "u_inbox.h"
 #include "u_can.h"
 #include "u_queues.h"
+#include "u_sensors.h"
 
 /* USER CODE END Includes */
 
@@ -50,11 +51,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
-ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
-
-ETH_HandleTypeDef heth;
-
 FDCAN_HandleTypeDef hfdcan2;
 
 IWDG_HandleTypeDef hiwdg;
@@ -72,7 +68,6 @@ SPI_HandleTypeDef hspi3;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ETH_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
@@ -155,7 +150,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ETH_Init();
   MX_LPUART1_UART_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
@@ -167,6 +161,9 @@ int main(void)
 
   /* Init CAN */
   can2_init(&hfdcan2);
+  
+  /* Init Lightning Sensor */
+  init_lightning_sensor(&hspi2);
 
   /* USER CODE END 2 */
 
@@ -245,50 +242,6 @@ void SystemClock_Config(void)
   /** Configure the programming delay
   */
   __HAL_FLASH_SET_PROGRAM_DELAY(FLASH_PROGRAMMING_DELAY_0);
-}
-
-/**
-  * @brief ETH Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ETH_Init(void)
-{
-
-  /* USER CODE BEGIN ETH_Init 0 */
-
-  /* USER CODE END ETH_Init 0 */
-
-   static uint8_t MACAddr[6];
-
-  /* USER CODE BEGIN ETH_Init 1 */
-
-  /* USER CODE END ETH_Init 1 */
-  heth.Instance = ETH;
-  MACAddr[0] = 0x00;
-  MACAddr[1] = 0x80;
-  MACAddr[2] = 0xE1;
-  MACAddr[3] = 0x00;
-  MACAddr[4] = 0x00;
-  MACAddr[5] = 0x00;
-  heth.Init.MACAddr = &MACAddr[0];
-  heth.Init.MediaInterface = HAL_ETH_RMII_MODE;
-  heth.Init.TxDesc = DMATxDscrTab;
-  heth.Init.RxDesc = DMARxDscrTab;
-  heth.Init.RxBuffLen = 1524;
-
-  /* USER CODE BEGIN MACADDRESS */
-
-  /* USER CODE END MACADDRESS */
-
-  if (HAL_ETH_Init(&heth) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ETH_Init 2 */
-
-  /* USER CODE END ETH_Init 2 */
-
 }
 
 /**
@@ -602,7 +555,6 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -610,19 +562,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, IMU_INT2_Pin|AS3935_INT_Pin|RED_Pin|GREEN_Pin
-                          |ETH_IRQ_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, IMU_INT2_Pin|AS3935_INT_Pin|RED_Pin|GREEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(IMU_INT1_GPIO_Port, IMU_INT1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(ETH_RESET__GPIO_Port, ETH_RESET__Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : IMU_INT2_Pin AS3935_INT_Pin RED_Pin GREEN_Pin
-                           ETH_IRQ_Pin */
-  GPIO_InitStruct.Pin = IMU_INT2_Pin|AS3935_INT_Pin|RED_Pin|GREEN_Pin
-                          |ETH_IRQ_Pin;
+  /*Configure GPIO pins : IMU_INT2_Pin AS3935_INT_Pin RED_Pin GREEN_Pin */
+  GPIO_InitStruct.Pin = IMU_INT2_Pin|AS3935_INT_Pin|RED_Pin|GREEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -634,19 +580,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(IMU_INT1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : ETH_RESET__Pin */
-  GPIO_InitStruct.Pin = ETH_RESET__Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(ETH_RESET__GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : ETH_GPIO_Pin ETH_RX_ER_Pin */
-  GPIO_InitStruct.Pin = ETH_GPIO_Pin|ETH_RX_ER_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

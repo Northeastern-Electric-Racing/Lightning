@@ -4,6 +4,11 @@
 #include <stdint.h>
 
 /**
+ * @brief initializes lightning sensor struct used for reading values
+ */
+void init_lightning_sensor(SPI_HandleTypeDef *hspi);
+
+/**
  * @brief reads and returns the information from the lighnting sensor
  * @return returns the information from the lighnting sensor
  */

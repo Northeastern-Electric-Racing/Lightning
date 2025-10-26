@@ -54,20 +54,29 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+
+    # ThreadX Utils
     "./Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "./Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
     "./Drivers/Embedded-Base/threadX/src/u_tx_mutex.c"
     "./Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
     "./Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
+    "./Drivers/Embedded-Base/middleware/src/bitstream.c"
+
+    # Peripheral Drivers
+    "../Drivers/Embedded-Base/general/src/lsm6dso_reg.c"
+    "../Drivers/Embedded-Base/general/src/lsm6dso.c"
+    "./Drivers/Embedded-Base/general/src/as3935.c"
+    "../Drivers/Embedded-Base/general/src/lis2mdl_reg.c"
+
+    # Core
     "./Core/Src/u_inbox.c"
-    "./Core/Src/u_faults.c"
     "./Core/Src/u_sensors.c"
     "./Core/Src/u_threads.c"
     "./Core/Src/u_statemachine.c"
     "./Core/Src/u_queues.c"
     "./Core/Src/u_can.c"
     "./Core/Src/u_mutexes.c"
-    "./Drivers/Embedded-Base/middleware/src/bitstream.c"
 )
 
 # Add include paths
@@ -97,3 +106,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+

@@ -7,32 +7,22 @@
 
 /* States */
 typedef enum {
-    BOOTING,    // BMS & IMD are currently booting
-    CAR_READY,  // BMS & IMD are done booting; waiting the recieve can fault messages
-    CAR_STABLE, // No faults; Car is good;
-    CAR_FAULTED // Car Faulted
-} state_t;
-
-/* Events */
-typedef enum {
-    BMS_ALIVE, // BMS is active
-    IMD_ALIVE, // IMD is active
-    STABLE,    // Car is Stable
-    FAULT,     // Car is Fualted
-} event_t;
+    LIGHT_OFF = 0,      /**  Light Off      */
+    LIGHT_GREEN = 1,    /**  Light Green On */
+    LIGHT_RED = 2       /**  Light Red ON   */
+} Lightning_Board_Light_Status;
 
 /**
- * @brief Processes an event based on the current state.
- * @param event The event that was triggered.
- * @param data Pointer to any data associated with the event. Can be NULL if not needed.
+ * @brief sets the state of the lightning board
+ * @param state the state to change to
  */
-uint8_t statemachine_process_event(event_t event, uint8_t *data);
+uint8_t set_statemachine(Lightning_Board_Light_Status state);
 
 /**
- * @brief Returns the current machine state
- * @return machine state
+ * @brief returns the statemachine state
+ * @return the state machine state
  */
-state_t get_current_state();
+Lightning_Board_Light_Status get_current_state();
 
 #endif /* u_statemachine.h */
 

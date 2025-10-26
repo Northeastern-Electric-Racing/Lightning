@@ -10,9 +10,7 @@ uint8_t can2_init(FDCAN_HandleTypeDef *hcan);
 extern can_t can2;
 
 /* List of CAN IDs */
-#define BMS_ALIVE_CAN_ID  0x1 /* TODO: Replace with actual */
-#define IMD_ALIVE_CAN_ID  0x2 /* TODO: Replace with actual */
-#define VCU_FAULTS_CAN_ID 0x3 /* TODO: Replace with actual */
+#define CERBERUS_MSG  0xCA
 
 
 #endif /* u_can.h */

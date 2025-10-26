@@ -90,9 +90,9 @@ void can_outgoing_thread(ULONG thread_input) {
     }
 }
 
-static uint32_t lightning_sensor_value;
-static uint32_t imu_value;
-static uint32_t magnetometer_value;
+static can_msg_t lightning_sensor_value;
+static can_msg_t imu_value;
+static can_msg_t magnetometer_value;
 
 /* Sensors Thread. Reads sensors's information. */
 static thread_t _sensors_thread = {
@@ -108,14 +108,9 @@ static thread_t _sensors_thread = {
 void sensors_thread(ULONG thread_input) {
     
     while (1) {
-
-        lightning_sensor_value = read_lightning_sensor();
-        imu_value = read_imu();
-        magnetometer_value = read_magnetometer();
-        
-        queue_send(&can_outgoing, &lightning_sensor_value);
-        queue_send(&can_outgoing, &imu_value);
-        queue_send(&can_outgoing, &magnetometer_value);
+        queue_send(&can_outgoing, read_lightning_sensor());
+        queue_send(&can_outgoing, read_imu());
+        queue_send(&can_outgoing, read_magnetometer());
 
         tx_thread_sleep(_sensors_thread.sleep);
     }
@@ -138,22 +133,23 @@ void gpio_lights_thread(ULONG thread_input) {
         int status = mutex_get(&state_machine_mutex);
 
         if (status == TX_SUCCESS) {
-            state_t state = get_current_state();
+            Lightning_Board_Light_Status state = get_current_state();
 
-            if (state == CAR_STABLE) {
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-                return;
+            switch (state) {
+                case LIGHT_GREEN:
+                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                    break;
+                case LIGHT_RED:
+                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                case LIGHT_OFF:
+                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                default:
+                    DEBUG_PRINTLN("State machine state is not in range %d", state);
+                    break;
             }
-
-            if (state == CAR_FAULTED) {
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
-                return;
-            }
-
-            HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
 
             mutex_put(&state_machine_mutex);
         }

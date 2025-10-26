@@ -133,22 +133,23 @@ void gpio_lights_thread(ULONG thread_input) {
         int status = mutex_get(&state_machine_mutex);
 
         if (status == TX_SUCCESS) {
-            state_t state = get_current_state();
+            Lightning_Board_Light_Status state = get_current_state();
 
-            if (state == CAR_STABLE) {
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-                return;
+            switch (state) {
+                case LIGHT_GREEN:
+                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                    break;
+                case LIGHT_RED:
+                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                case LIGHT_OFF:
+                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                default:
+                    DEBUG_PRINTLN("State machine state is not in range %d", state);
+                    break;
             }
-
-            if (state == CAR_FAULTED) {
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
-                return;
-            }
-
-            HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
 
             mutex_put(&state_machine_mutex);
         }

@@ -30,13 +30,9 @@ static int32_t _lsm6dso_read(uint16_t device_address, uint16_t register_address,
     uint8_t spi_reg = (uint8_t)(register_address | 0x80);
     HAL_StatusTypeDef status;
     
-    /* Select the IMU device. */
-    HAL_GPIO_WritePin(IMU_NSS_GPIO_Port, IMU_NSS_Pin, _SELECT_IMU);
-    
     /* Send the register address we're trying to read from. */
     status = HAL_SPI_Transmit(&hspi2, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if(status != HAL_OK) {
-        HAL_GPIO_WritePin(IMU_NSS_GPIO_Port, IMU_NSS_Pin, _DESELECT_IMU);
         DEBUG_PRINTLN("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return LSM6DSO_ERROR;
     }
@@ -48,9 +44,6 @@ static int32_t _lsm6dso_read(uint16_t device_address, uint16_t register_address,
         return LSM6DSO_ERROR;
     }
     
-    /* Deselect the IMU device. */
-    HAL_GPIO_WritePin(IMU_NSS_GPIO_Port, IMU_NSS_Pin, _DESELECT_IMU);
-    
     return LSM6DSO_OK;
 }
 
@@ -58,9 +51,6 @@ static int32_t _lsm6dso_write(uint16_t device_address, uint16_t register_address
     /* For SPI writes, clear MSB = 0 for write operation. */
     uint8_t spi_reg = (uint8_t)(register_address & 0x7F);
     HAL_StatusTypeDef status;
-    
-    /* Select the device (CS low). */
-    HAL_GPIO_WritePin(IMU_NSS_GPIO_Port, IMU_NSS_Pin, _SELECT_IMU);
     
     /* Send register address. */
     status = HAL_SPI_Transmit(&hspi1, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
@@ -76,9 +66,6 @@ static int32_t _lsm6dso_write(uint16_t device_address, uint16_t register_address
         DEBUG_PRINTLN("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return LSM6DSO_ERROR;
     }
-    
-    /* Deselect the device (CS high). */
-    HAL_GPIO_WritePin(IMU_NSS_GPIO_Port, IMU_NSS_Pin, _DESELECT_IMU);
     
     return LSM6DSO_OK;
 }
@@ -155,33 +142,22 @@ int init_imu() {
 can_msg_t *read_lightning_sensor() {
     uint8_t interrupt = as3935_get_interrupt(as3935);
 
-    can_msg_t *message = malloc(sizeof(can_msg_t));
-
-    message->id = 0xDA;
-    message->data[0] = interrupt;
+    can_msg_t message = { .id = 0xDA, .len = 8, .data = { 0 } };
 
     if (interrupt == AS3935_INT_L) {
         uint8_t distance = as3935_get_distance(as3935);
         uint32_t energy = as3935_get_energy(as3935);
 
-        message->data[1] = distance;
-        message->data[2] = (energy >> 24) & 0xFF;
-        message->data[3] = (energy >> 16) & 0xFF;
-        message->data[4] = (energy >> 8) & 0xFF;
-        message->data[5] = (energy >> 0) & 0xFF;
-        message->data[6] = 0;
-        message->data[7] = 0;
-    }
-    else {
-        for (int i = 1; i < 8; i++) {
-            message->data[i] = 0;
-        }
+        message.data[1] = distance;
+        message.data[2] = (energy >> 24) & 0xFF;
+        message.data[3] = (energy >> 16) & 0xFF;
+        message.data[4] = (energy >> 8) & 0xFF;
+        message.data[5] = (energy >> 0) & 0xFF;
+        message.data[6] = 0;
+        message.data[7] = 0;
     }
 
-    message->id_is_extended = false;
-    message->len = 8;
-
-    return message;
+    return &message;
 }
 
 can_msg_t *read_imu() {

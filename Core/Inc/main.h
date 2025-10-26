@@ -71,12 +71,6 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-#define IMU_NSS_Pin GPIO_PIN_10
-#define IMU_NSS_GPIO_Port GPIOG
-
-#define AS3935_NSS_Pin GPIO_PIN_3
-#define AS3935_NSS_GPIO_Port GPIOA
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

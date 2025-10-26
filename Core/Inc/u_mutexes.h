@@ -9,7 +9,6 @@
 
 /* Mutex List */
 extern mutex_t state_machine_mutex; // State Machine Mutex
-// add more as necessary...
 
 /* API */
 uint8_t mutexes_init(); // Initializes all mutexes set up in u_mutexes.c

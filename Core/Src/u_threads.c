@@ -90,9 +90,9 @@ void can_outgoing_thread(ULONG thread_input) {
     }
 }
 
-static uint32_t lightning_sensor_value;
-static uint32_t imu_value;
-static uint32_t magnetometer_value;
+static can_msg_t lightning_sensor_value;
+static can_msg_t imu_value;
+static can_msg_t magnetometer_value;
 
 /* Sensors Thread. Reads sensors's information. */
 static thread_t _sensors_thread = {
@@ -108,14 +108,9 @@ static thread_t _sensors_thread = {
 void sensors_thread(ULONG thread_input) {
     
     while (1) {
-
-        lightning_sensor_value = read_lightning_sensor();
-        imu_value = read_imu();
-        magnetometer_value = read_magnetometer();
-        
-        queue_send(&can_outgoing, &lightning_sensor_value);
-        queue_send(&can_outgoing, &imu_value);
-        queue_send(&can_outgoing, &magnetometer_value);
+        queue_send(&can_outgoing, read_lightning_sensor());
+        queue_send(&can_outgoing, read_imu());
+        queue_send(&can_outgoing, read_magnetometer());
 
         tx_thread_sleep(_sensors_thread.sleep);
     }

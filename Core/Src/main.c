@@ -166,7 +166,9 @@ int main(void)
   can2_init(&hfdcan2);
   
   /* Init Lightning Sensor */
+  init_imu(&hspi1);
   init_lightning_sensor(&hspi2);
+  init_magnetometer(&hspi3);
 
   /* USER CODE END 2 */
 

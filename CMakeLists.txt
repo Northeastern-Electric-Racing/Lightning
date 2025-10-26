@@ -21,6 +21,8 @@ endif()
 # Set the project name
 set(CMAKE_PROJECT_NAME Lightning)
 
+# Include toolchain file
+include("cmake/gcc-arm-none-eabi.cmake")
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -62,8 +64,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Drivers/Embedded-Base/middleware/src/bitstream.c"
 
     # Peripheral Drivers
+    "../Drivers/Embedded-Base/general/src/lsm6dso_reg.c"
+    "../Drivers/Embedded-Base/general/src/lsm6dso.c"
     "./Drivers/Embedded-Base/general/src/as3935.c"
-    "./Drivers/Embedded-Base/general/src/lsm6dso.c"
+    "../Drivers/Embedded-Base/general/src/lis2mdl_reg.c"
 
     # Core
     "./Core/Src/u_inbox.c"
@@ -102,3 +106,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+

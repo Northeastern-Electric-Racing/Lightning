@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #include "c_utils.h"
 #include "as3935.h"

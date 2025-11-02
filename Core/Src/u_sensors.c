@@ -324,7 +324,7 @@ void read_magnetometer() {
     axes_data.axes_1 = lis2mdl_from_lsb_to_mgauss(raw_axes[0]) * 1000.0f;
     axes_data.axes_2 = lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f;
     axes_data.axes_3 = lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f;
-
+  
     can_msg_t message = { .id = 0xAD, .len = 6, .data = { 0 } };
 
     memcpy(message.data, &axes_data, sizeof(axes_data));

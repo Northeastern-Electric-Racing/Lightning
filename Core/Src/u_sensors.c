@@ -2,14 +2,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "c_utils.h"
 #include "as3935.h"
 #include "lsm6dso.h"
 #include "lis2mdl_reg.h"
 #include "u_can.h"
 #include "u_tx_debug.h"
+#include "u_queues.h"
 
 static SPI_HandleTypeDef *imu_spi;
-static SPI_HandleTypeDef *compass_spi;
 
 static LSM6DSO_Object_t imu;
 static as3935_t *as3935;
@@ -198,7 +199,7 @@ static int32_t _lis2mdl_read(void *handle, uint8_t register_address, uint8_t *da
 }
 
 
-static int32_t _lismdl_write(void *handle, uint8_t register_address, uint8_t *data, uint16_t length){
+static int32_t _lis2mdl_write(void *handle, uint8_t register_address, uint8_t *data, uint16_t length){
     HAL_StatusTypeDef status;
 
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *)handle, &register_address, sizeof(register_address), HAL_MAX_DELAY);
@@ -216,63 +217,90 @@ static int32_t _lismdl_write(void *handle, uint8_t register_address, uint8_t *da
     return 0;
 }
 
-int init_magnetometer(SPI_HandleTypeDef *given_compass_spi) {
+int init_magnetometer(SPI_HandleTypeDef *given_magnetometer_spi) {
     uint8_t status;
 
     lis2mdl_ctx = malloc(sizeof(stmdev_ctx_t));
 
-    lis2mdl_ctx->handle = &given_compass_spi;
+    lis2mdl_ctx->handle = given_magnetometer_spi;
     lis2mdl_ctx->read_reg = _lis2mdl_read;
-    lis2mdl_ctx->write_reg = _lismdl_write;
+    lis2mdl_ctx->write_reg = _lis2mdl_write;
     
-    lis2mdl_device_id_get(&lis2mdl_ctx, &status);
+    lis2mdl_device_id_get(lis2mdl_ctx, &status);
 
     if (status != LIS2MDL_ID) {
         DEBUG_PRINTLN("Device ID is not for LIS2MDL", status, hal_status_toString(status));
         return -1;
     }
 
-    lis2mdl_reset_set(&lis2mdl_ctx, 1);
-    lis2mdl_operating_mode_set(&lis2mdl_ctx, LIS2MDL_CONTINUOUS_MODE);
-    lis2mdl_data_rate_set(&lis2mdl_ctx, LIS2MDL_ODR_50Hz);
-    lis2mdl_offset_temp_comp_set(&lis2mdl_ctx, 1);
-    lis2mdl_block_data_update_set(&lis2mdl_ctx, 1);
+    lis2mdl_reset_set(lis2mdl_ctx, 1);
+    lis2mdl_operating_mode_set(lis2mdl_ctx, LIS2MDL_CONTINUOUS_MODE);
+    lis2mdl_data_rate_set(lis2mdl_ctx, LIS2MDL_ODR_50Hz);
+    lis2mdl_offset_temp_comp_set(lis2mdl_ctx, 1);
+    lis2mdl_block_data_update_set(lis2mdl_ctx, 1);
 
     return 0;
 }
 
-can_msg_t *read_imu() {
-    LSM6DSO_Axes_t *accel_axes = malloc(sizeof(LSM6DSO_Axes_t));
-    LSM6DSO_Axes_t *gyro_axes = malloc(sizeof(LSM6DSO_Axes_t));
+void read_imu() {
+    LSM6DSO_Axes_t accel_axes;
+    LSM6DSO_Axes_t gyro_axes;
 
-    imu_getAccelerometerData(accel_axes);
-    imu_getGyroscopeData(gyro_axes);
+    imu_getAccelerometerData(&accel_axes);
+    imu_getGyroscopeData(&gyro_axes);
+
+    struct __attribute__((__packed__)) {
+		int16_t accel_x;
+		int16_t accel_y;
+		int16_t accel_z;
+	} accel_data;
+
+    accel_data.accel_x = accel_axes.x;
+    accel_data.accel_y = accel_axes.y;
+    accel_data.accel_z = accel_axes.y;
+
+    struct __attribute__((__packed__)) {
+		int16_t gyro_x;
+		int16_t gyro_y;
+		int16_t gyro_z;
+	} gyro_data;
+
+    gyro_data.gyro_x = gyro_axes.x;
+    gyro_data.gyro_y = gyro_axes.y;
+    gyro_data.gyro_z = gyro_axes.y;
+
+    endian_swap(&accel_data.accel_x, sizeof(accel_data.accel_x));
+	endian_swap(&accel_data.accel_y, sizeof(accel_data.accel_y));
+	endian_swap(&accel_data.accel_z, sizeof(accel_data.accel_z));
+	endian_swap(&gyro_data.gyro_x, sizeof(gyro_data.gyro_x));
+	endian_swap(&gyro_data.gyro_y, sizeof(gyro_data.gyro_y));
+	endian_swap(&gyro_data.gyro_z, sizeof(gyro_data.gyro_z));
+
+    can_msg_t imu_accel_msg = { .id = 0xAA,
+				    .len = 6,
+				    .data = { 0 } };
     
-    can_msg_t message = { .id = 0xAA, .len = 128, .data = { 0 } };
-    
-    int32_t x = accel_axes->x;
-    int32_t y = accel_axes->y;
-    int32_t z = accel_axes->z;
+	can_msg_t imu_gyro_msg = { .id = 0xAB,
+				   .len = 6,
+				   .data = { 0 } };
 
-    message.data[0] = accel_axes->x;
+    memcpy(imu_accel_msg.data, &accel_data, sizeof(accel_data));
+    memcpy(imu_gyro_msg.data, &gyro_data, sizeof(gyro_data));
 
-    free(accel_axes);
-    free(gyro_axes);
-
-    /** TODO: How should I send information */
-
-    return 0;
+    queue_send(&can_outgoing, &imu_accel_msg);
+    queue_send(&can_outgoing, &imu_gyro_msg);
 }
 
-can_msg_t *read_lightning_sensor() {
+void read_lightning_sensor() {
     uint8_t interrupt = as3935_get_interrupt(as3935);
 
-    can_msg_t message = { .id = 0xAB, .len = 128, .data = { 0 } };
+    can_msg_t message = { .id = 0xAB, .len = 12, .data = { 0 } };
 
     if (interrupt == AS3935_INT_L) {
         uint8_t distance = as3935_get_distance(as3935);
         uint32_t energy = as3935_get_energy(as3935);
 
+        message.data[0] = interrupt;
         message.data[1] = distance;
         message.data[2] = (energy >> 24) & 0xFF;
         message.data[3] = (energy >> 16) & 0xFF;
@@ -282,21 +310,28 @@ can_msg_t *read_lightning_sensor() {
         message.data[7] = 0;
     }
 
-    /** TODO: How should I send information */
-
-    return &message;
+    queue_send(&can_outgoing, &message);
 }
 
-can_msg_t *read_magnetometer() {
-    int axes[3];
-    lis2mdl_magnetic_raw_get(lis2mdl_ctx, axes);
+void read_magnetometer() {
+    int16_t raw_axes[3];
+    float axes[3];
 
-    int temp;
-    lis2mdl_temperature_raw_get(lis2mdl_ctx, &temp);
+    uint8_t data_ready;
+    lis2mdl_mag_data_ready_get(lis2mdl_ctx, &data_ready);
+    if (!data_ready) {
+        return;
+    }
 
-    can_msg_t message = { .id = 0xAC, .len = 8, .data = { 0 } };
+    lis2mdl_magnetic_raw_get(lis2mdl_ctx, raw_axes);
 
-    /** TODO: How should I send information */
+    axes[0] = lis2mdl_from_lsb_to_mgauss(raw_axes[0]) * 1000.0f;
+    axes[1] = lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f;
+    axes[2] = lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f;
 
-    return 0;
+    can_msg_t message = { .id = 0xAC, .len = 6, .data = { 0 } };
+
+    memcpy(message.data, &axes, sizeof(axes));
+
+    queue_send(&can_outgoing, &message);
 }

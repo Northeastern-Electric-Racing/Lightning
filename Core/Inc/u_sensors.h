@@ -26,18 +26,16 @@ int init_magnetometer(SPI_HandleTypeDef *given_compass_spi);
  * @brief reads and returns the information from imu
  * @return returns the information from imu
  */
-can_msg_t *read_imu();
+void read_imu();
 
 /**
  * @brief reads and returns the information from the lighnting sensor
- * @return returns the information from the lighnting sensor
  */
-can_msg_t *read_lightning_sensor();
+void read_lightning_sensor();
 
 /**
  * @brief reads and returns the information from magnetometer
- * @return returns the information from magnetometer
  */
-can_msg_t *read_magnetometer();
+void read_magnetometer();
 
 #endif

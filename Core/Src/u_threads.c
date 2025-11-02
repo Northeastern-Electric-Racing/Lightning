@@ -108,9 +108,9 @@ static thread_t _sensors_thread = {
 void sensors_thread(ULONG thread_input) {
     
     while (1) {
-        queue_send(&can_outgoing, read_lightning_sensor());
-        queue_send(&can_outgoing, read_imu());
-        queue_send(&can_outgoing, read_magnetometer());
+        read_lightning_sensor();
+        read_imu();
+        read_magnetometer();
 
         tx_thread_sleep(_sensors_thread.sleep);
     }

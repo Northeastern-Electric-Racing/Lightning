@@ -269,13 +269,6 @@ void read_imu() {
     gyro_data.gyro_y = gyro_axes.y;
     gyro_data.gyro_z = gyro_axes.y;
 
-    endian_swap(&accel_data.accel_x, sizeof(accel_data.accel_x));
-	endian_swap(&accel_data.accel_y, sizeof(accel_data.accel_y));
-	endian_swap(&accel_data.accel_z, sizeof(accel_data.accel_z));
-	endian_swap(&gyro_data.gyro_x, sizeof(gyro_data.gyro_x));
-	endian_swap(&gyro_data.gyro_y, sizeof(gyro_data.gyro_y));
-	endian_swap(&gyro_data.gyro_z, sizeof(gyro_data.gyro_z));
-
     can_msg_t imu_accel_msg = { .id = 0xAA,
 				    .len = 6,
 				    .data = { 0 } };
@@ -294,28 +287,25 @@ void read_imu() {
 void read_lightning_sensor() {
     uint8_t interrupt = as3935_get_interrupt(as3935);
 
-    can_msg_t message = { .id = 0xAB, .len = 12, .data = { 0 } };
+    can_msg_t lightning_message = { .id = 0xAC, .len = 8, .data = { 0 } };
 
-    if (interrupt == AS3935_INT_L) {
-        uint8_t distance = as3935_get_distance(as3935);
-        uint32_t energy = as3935_get_energy(as3935);
+    struct __attribute__((__packed__)) {
+		uint8_t interrupt;
+		uint8_t distance;
+		uint32_t energy;
+	} lightning_data;
 
-        message.data[0] = interrupt;
-        message.data[1] = distance;
-        message.data[2] = (energy >> 24) & 0xFF;
-        message.data[3] = (energy >> 16) & 0xFF;
-        message.data[4] = (energy >> 8) & 0xFF;
-        message.data[5] = (energy >> 0) & 0xFF;
-        message.data[6] = 0;
-        message.data[7] = 0;
-    }
+    lightning_data.interrupt = interrupt;
+    lightning_data.distance = as3935_get_distance(as3935);
+    lightning_data.energy = as3935_get_energy(as3935);
 
-    queue_send(&can_outgoing, &message);
+    memcpy(lightning_message.data, &lightning_data, sizeof(lightning_data));
+
+    queue_send(&can_outgoing, &lightning_message);
 }
 
 void read_magnetometer() {
-    int16_t raw_axes[3];
-    float axes[3];
+    int16_t raw_axes[3];    
 
     uint8_t data_ready;
     lis2mdl_mag_data_ready_get(lis2mdl_ctx, &data_ready);
@@ -325,13 +315,19 @@ void read_magnetometer() {
 
     lis2mdl_magnetic_raw_get(lis2mdl_ctx, raw_axes);
 
-    axes[0] = lis2mdl_from_lsb_to_mgauss(raw_axes[0]) * 1000.0f;
-    axes[1] = lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f;
-    axes[2] = lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f;
+    struct __attribute__((__packed__)) {
+		int16_t axes_1;
+		int16_t axes_2;
+		int16_t axes_3;
+	} axes_data;
 
-    can_msg_t message = { .id = 0xAC, .len = 6, .data = { 0 } };
+    axes_data.axes_1 = lis2mdl_from_lsb_to_mgauss(raw_axes[0]);
+    axes_data.axes_2 = lis2mdl_from_lsb_to_mgauss(raw_axes[1]);
+    axes_data.axes_3 = lis2mdl_from_lsb_to_mgauss(raw_axes[2]);
 
-    memcpy(message.data, &axes, sizeof(axes));
+    can_msg_t message = { .id = 0xAD, .len = 6, .data = { 0 } };
+
+    memcpy(message.data, &axes_data, sizeof(axes_data));
 
     queue_send(&can_outgoing, &message);
 }

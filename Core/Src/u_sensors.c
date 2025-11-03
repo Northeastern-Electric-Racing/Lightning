@@ -292,12 +292,12 @@ void read_lightning_sensor() {
     struct __attribute__((__packed__)) {
 		uint8_t interrupt;
 		uint8_t distance;
-		uint32_t energy;
+		uint16_t energy;
 	} lightning_data;
 
     lightning_data.interrupt = interrupt;
     lightning_data.distance = as3935_get_distance(as3935);
-    lightning_data.energy = as3935_get_energy(as3935);
+    lightning_data.energy = (uint16_t) as3935_get_energy(as3935);
 
     memcpy(lightning_message.data, &lightning_data, sizeof(lightning_data));
 

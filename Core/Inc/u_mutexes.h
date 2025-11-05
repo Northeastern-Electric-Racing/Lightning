@@ -10,7 +10,10 @@
 /* Mutex List */
 extern mutex_t state_machine_mutex; // State Machine Mutex
 
-/* API */
-uint8_t mutexes_init(); // Initializes all mutexes set up in u_mutexes.c
+/**
+ * @brief Initializes all mutexes
+ * @return Returns a tx status
+ */
+uint8_t mutexes_init();
 
 #endif /* u_mutex.h */

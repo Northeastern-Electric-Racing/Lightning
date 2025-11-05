@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include "fdcan.h"
 
+/**
+ * @brief Initializes CAN2 Line
+ * @return Returns a tx error code if failed
+ */
 uint8_t can2_init(FDCAN_HandleTypeDef *hcan);
 
 /* List of CAN interfaces */

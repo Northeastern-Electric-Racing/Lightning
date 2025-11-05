@@ -3,6 +3,9 @@
 
 #include "fdcan.h"
 
-void inbox_can(can_msg_t *message); /* Function to process received CAN messages. */
+/**
+ * @brief Processes the given CAN message
+ */
+void inbox_can(can_msg_t *message);
 
 #endif /* u_inbox.h */

@@ -9,14 +9,12 @@ mutex_t state_machine_mutex = {
     .priority_inherit = TX_INHERIT /* Priority inheritance setting. */
 };
 
-/* Initializes all ThreadX mutexes. 
-*  Calls to _create_mutex() should go in here
-*/
 uint8_t mutexes_init() {
-    /* Create Mutexes. */
-    CATCH_ERROR(create_mutex(&state_machine_mutex), U_SUCCESS);  // Create Faults Mutex.
-    // add more as necessary.
+    if (create_mutex(&state_machine_mutex) != U_SUCCESS) {
+        PRINTLN_INFO("mutexes_init() failed.");
+        return U_ERROR;
+    }
 
-    DEBUG_PRINTLN("Ran mutexes_init().");
+    PRINTLN_INFO("Ran mutexes_init().");
     return U_SUCCESS;
 }

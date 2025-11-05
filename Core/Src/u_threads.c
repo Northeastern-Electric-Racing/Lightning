@@ -16,14 +16,13 @@ static thread_t _default_thread = {
         .threshold  = 9,                 /* Preemption Threshold */
         .time_slice = TX_NO_TIME_SLICE,  /* Time Slice */
         .auto_start = TX_AUTO_START,     /* Auto Start */
-        .sleep      = 10,               /* Sleep (in ticks) */
+        .sleep      = 10,                /* Sleep (in ticks) */
         .function   = default_thread     /* Thread Function */
     };
 void default_thread(ULONG thread_input) {
     
     while(1) {
-
-        /* Kick the watchdogs (sad) )*/
+        /* Kick the watchdogs (sad) */
         HAL_IWDG_Refresh(&hiwdg); // Internal Watchdog
 
         /* Sleep Thread for specified number of ticks. */
@@ -39,13 +38,12 @@ static thread_t _can_incoming_thread = {
         .threshold  = 9,                         /* Preemption Threshold */
         .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
         .auto_start = TX_AUTO_START,             /* Auto Start */
-        .sleep      = 10,                       /* Sleep (in ticks) */
+        .sleep      = 10,                        /* Sleep (in ticks) */
         .function   = can_incoming_thread        /* Thread Function */
     };
 void can_incoming_thread(ULONG thread_input) {
     
     while(1) {
-
         can_msg_t message;
 
         /* Process incoming messages */
@@ -66,7 +64,7 @@ static thread_t _can_outgoing_thread = {
     .threshold  = 9,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
     .auto_start = TX_AUTO_START,             /* Auto Start */
-    .sleep      = 10,                       /* Sleep (in ticks) */
+    .sleep      = 10,                        /* Sleep (in ticks) */
     .function   = can_outgoing_thread        /* Thread Function */
 };
 void can_outgoing_thread(ULONG thread_input) {
@@ -80,19 +78,14 @@ void can_outgoing_thread(ULONG thread_input) {
         while(queue_receive(&can_outgoing, &message) == U_SUCCESS) {
             status = can_send_msg(&can2, &message);
             if(status != U_SUCCESS) {
-                DEBUG_PRINTLN("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
-                // u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
-                }
+                PRINTLN_INFO("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
+            }
         }
 
         /* Sleep Thread for specified number of ticks. */
         tx_thread_sleep(_can_outgoing_thread.sleep);
     }
 }
-
-static can_msg_t lightning_sensor_value;
-static can_msg_t imu_value;
-static can_msg_t magnetometer_value;
 
 /* Sensors Thread. Reads sensors's information. */
 static thread_t _sensors_thread = {
@@ -108,9 +101,17 @@ static thread_t _sensors_thread = {
 void sensors_thread(ULONG thread_input) {
     
     while (1) {
-        read_lightning_sensor();
-        read_imu();
-        read_magnetometer();
+        if (read_lightning_sensor() != U_SUCCESS) {
+            PRINTLN_INFO("Reading & Sending Lightning Sensor Data Failed.");
+        }
+
+        if (read_imu() != U_SUCCESS) {
+            PRINTLN_INFO("Reading & Sending IMU Data Failed.");
+        }
+
+        if (read_magnetometer() != U_SUCCESS) {
+            PRINTLN_INFO("Reading & Sending Magnetometer Data Failed.");
+        }
 
         tx_thread_sleep(_sensors_thread.sleep);
     }
@@ -128,33 +129,25 @@ static thread_t _gpio_lights_thread = {
     .function   = gpio_lights_thread         /* Thread Function */
 };
 void gpio_lights_thread(ULONG thread_input) {
-    
     while (1) {
-        int status = mutex_get(&state_machine_mutex);
+        Lightning_Board_Light_Status state = get_current_state();
 
-        if (status == TX_SUCCESS) {
-            Lightning_Board_Light_Status state = get_current_state();
-
-            switch (state) {
-                case LIGHT_GREEN:
-                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
-                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-                    break;
-                case LIGHT_RED:
-                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
-                case LIGHT_OFF:
-                    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                    HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-                default:
-                    DEBUG_PRINTLN("State machine state is not in range %d", state);
-                    break;
-            }
-
-            mutex_put(&state_machine_mutex);
-        }
-        else {
-            DEBUG_PRINTLN("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        switch (state) {
+            case LIGHT_GREEN:
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                break;
+            case LIGHT_RED:
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                break;
+            case LIGHT_OFF:
+                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                break;
+            default:
+                PRINTLN_INFO("State machine state is not in range %d", state);
+                break;
         }
 
         tx_thread_sleep(_gpio_lights_thread.sleep);
@@ -162,8 +155,8 @@ void gpio_lights_thread(ULONG thread_input) {
 }
 
 /* Initializes all ThreadX threads. 
-*  Calls to _create_thread() should go in here
-*/
+ * Calls to _create_thread() should go in here
+ */
 uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
 
     /* Create Threads */
@@ -172,8 +165,7 @@ uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
     CATCH_ERROR(create_thread(byte_pool, &_can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
     CATCH_ERROR(create_thread(byte_pool, &_sensors_thread), U_SUCCESS);           // Create Sensor thread.
     CATCH_ERROR(create_thread(byte_pool, &_gpio_lights_thread), U_SUCCESS);       // Create GPIO Lights thread.
-    // add more threads here if necessary
 
-    DEBUG_PRINTLN("Ran threads_init().");
+    PRINTLN_INFO("Ran threads_init().");
     return U_SUCCESS;
 }

@@ -71,6 +71,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "../Drivers/Embedded-Base/general/src/lis2mdl_reg.c"
 
     # Core
+    "./Core/Src/u_test.c"
     "./Core/Src/u_inbox.c"
     "./Core/Src/u_sensors.c"
     "./Core/Src/u_threads.c"

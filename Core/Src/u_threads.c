@@ -7,6 +7,9 @@
 #include "bitstream.h"
 #include "u_statemachine.h"
 #include "u_mutexes.h"
+#include "u_test.h"
+
+#define TEST_MODE 1
 
 /* Default Thread */
 static thread_t _default_thread = {
@@ -129,6 +132,7 @@ static thread_t _gpio_lights_thread = {
     .function   = gpio_lights_thread         /* Thread Function */
 };
 void gpio_lights_thread(ULONG thread_input) {
+
     while (1) {
         Lightning_Board_Light_Status state = get_current_state();
 
@@ -151,6 +155,10 @@ void gpio_lights_thread(ULONG thread_input) {
         }
 
         tx_thread_sleep(_gpio_lights_thread.sleep);
+
+        #if TEST_MODE
+        gpio_test();
+        #endif
     }
 }
 

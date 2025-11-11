@@ -100,7 +100,7 @@ int _write(int file, char *ptr, int len)
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
 
-	/* If a message has just been recieved... */
+	/* If a message has just been received... */
 	if (RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
 	{
 		can_msg_t message;
@@ -115,7 +115,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 			/* Check size */
 			if (rx_header.DataLength > 8)
 			{
-				printf("[main.c/HAL_FDCAN_RxFifo0Callback()] ERROR: Recieved message is larger than 8 bytes.\n");
+				printf("[main.c/HAL_FDCAN_RxFifo0Callback()] ERROR: Received message is larger than 8 bytes.\n");
 				return;
 			}
 
@@ -170,13 +170,23 @@ int main(void)
   MX_DCACHE1_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Init CAN */
-  can2_init(&hfdcan2);
+  /* Init Functions */
+  if (can2_init(&hfdcan2) != U_SUCCESS) {
+    PRINTLN_INFO("Initialize CAN Failed.");
+    Error_Handler();
+  }
   
-  /* Init Lightning Sensor */
-  init_imu(&hspi1);
-  init_lightning_sensor(&hspi2);
-  init_magnetometer(&hspi3);
+  if (init_imu(&hspi1) != U_SUCCESS) {
+    PRINTLN_INFO("Initialize IMU Failed.");
+  }
+
+  if (init_lightning_sensor(&hspi2) != U_SUCCESS) {
+    PRINTLN_INFO("Initialize Lightning Sensor Failed.");
+  }
+
+  if (init_magnetometer(&hspi3) != U_SUCCESS) {
+    PRINTLN_INFO("Initialize Magnetometer Failed.");
+  }
 
   /* USER CODE END 2 */
 

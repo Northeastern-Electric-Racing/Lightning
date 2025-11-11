@@ -12,7 +12,6 @@
 *  This handles any conversions between the actual message size and the rounded-up size.
 *
 *  On the bright side (assuming my code works), this file should automatically handle all the 32-bit word stuff for you so you don't have to worry about it.
-*
 */
 
 /* Incoming CAN Queue */
@@ -29,15 +28,17 @@ queue_t can_outgoing = {
     .capacity = 10                         /* Number of messages the queue can hold. */
 };
 
-/* Initializes all ThreadX queues. 
-*  Calls to _create_queue() should go in here
-*/
 uint8_t queues_init(TX_BYTE_POOL *byte_pool) {
+    if (create_queue(byte_pool, &can_incoming) != U_SUCCESS) {
+        PRINTLN_INFO("CAN Incoming queue creation failed.");
+        return U_ERROR;
+    }
 
-    /* Create Queues */
-    CATCH_ERROR(create_queue(byte_pool, &can_incoming), U_SUCCESS); // Create Incoming CAN Queue
-    CATCH_ERROR(create_queue(byte_pool, &can_outgoing), U_SUCCESS); // Create Outgoing CAN Queue
+    if (create_queue(byte_pool, &can_outgoing) != U_SUCCESS) {
+        PRINTLN_INFO("CAN Outgoing queue creation failed.");
+        return U_ERROR;
+    }
 
-    DEBUG_PRINTLN("Ran queues_init().");
+    PRINTLN_INFO("Ran queues_init().");
     return U_SUCCESS;
 }

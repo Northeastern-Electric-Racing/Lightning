@@ -9,6 +9,7 @@
 
 /* Initializes all threads. Called from app_threadx.c */
 uint8_t threads_init(TX_BYTE_POOL *byte_pool);
+
 /* Thread Functions */
 void default_thread(ULONG thread_input);
 void can_incoming_thread(ULONG thread_input);

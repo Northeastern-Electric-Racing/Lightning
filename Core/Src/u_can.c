@@ -8,31 +8,30 @@
 can_t can2;
 
 uint8_t can2_init(FDCAN_HandleTypeDef *hcan) {
-    
     /* Init CAN interface */
     HAL_StatusTypeDef status = can_init(&can2, hcan);
     if(status != HAL_OK) {
-        DEBUG_PRINTLN("Failed to execute can_init() when initializing can2 (Status: %d/%s).", status, hal_status_toString(status));
+        PRINTLN_INFO("Failed to execute can_init() when initializing can2 (Status: %d/%s).", status, hal_status_toString(status));
         return U_ERROR;
     }
 
     /* Add filters for standard IDs */
-    uint16_t standard_ids[] = { CERBERUS_MSG };
+    uint16_t standard_ids[] = { CERBERUS_MSG, CERBERUS_MSG };
     status = can_add_filter_standard(&can2, &standard_ids);
     if(status != HAL_OK) {
-        DEBUG_PRINTLN("Failed to add standard filter to can2 (Status: %d/%s, ID1: %d, ID2: %d).", status, hal_status_toString(status), standard_ids[0], standard_ids[1]);
+        PRINTLN_INFO("Failed to add standard filter to can2 (Status: %d/%s, ID1: %d, ID2: %d).", status, hal_status_toString(status), standard_ids[0], standard_ids[1]);
         return U_ERROR;
     }
 
-    /* Add fitlers for extended IDs */
-    uint16_t extended_ids[] = { CERBERUS_MSG };
+    /* Add filters for extended IDs */
+    uint16_t extended_ids[] = { CERBERUS_MSG, CERBERUS_MSG };
     status = can_add_filter_extended(&can2, extended_ids);
     if (status != HAL_OK) {
-        DEBUG_PRINTLN("Failed to add extended filter to can2 (Status: %d/%s, ID1: %ld, ID2: %ld).", status, hal_status_toString(status), extended_ids[0], extended_ids[1]);
+        PRINTLN_INFO("Failed to add extended filter to can2 (Status: %d/%s, ID1: %u, ID2: %u).", status, hal_status_toString(status), extended_ids[0], extended_ids[1]);
         return U_ERROR;
     }
 
-    DEBUG_PRINTLN("Ran can2_init().");
+    PRINTLN_INFO("Ran can2_init().");  
 
     return U_SUCCESS;
 }

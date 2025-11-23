@@ -65,8 +65,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Drivers/Embedded-Base/middleware/src/c_utils.c"
 
     # Peripheral Drivers
-    "../Drivers/Embedded-Base/general/src/lsm6dso_reg.c"
-    "../Drivers/Embedded-Base/general/src/lsm6dso.c"
+    "../Drivers/Embedded-Base/general/include/lsm6dsv_reg.h"
+    "../Drivers/Embedded-Base/general/src/lsm6dsv_reg.c"
     "./Drivers/Embedded-Base/general/src/as3935.c"
     "../Drivers/Embedded-Base/general/src/lis2mdl_reg.c"
 

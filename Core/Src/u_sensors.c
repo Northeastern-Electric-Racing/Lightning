@@ -10,12 +10,13 @@
 #include "u_tx_debug.h"
 #include "u_queues.h"
 
-static SPI_HandleTypeDef *imu_spi = NULL;
+extern SPI_HandleTypeDef hspi1; // imu
+extern SPI_HandleTypeDef hspi2; // lightning sensor
+extern SPI_HandleTypeDef hspi3; // magnetometer
 
 static LSM6DSO_Object_t imu;
 static as3935_t *as3935 = NULL;
 static stmdev_ctx_t *lis2mdl_ctx = NULL;
-
 
 
 /** 
@@ -28,14 +29,14 @@ static int32_t _lsm6dso_read(uint16_t device_address, uint16_t register_address,
     HAL_StatusTypeDef status;
     
     /* Send the register address we're trying to read from. */
-    status = HAL_SPI_Transmit(imu_spi, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
+    status = HAL_SPI_Transmit(&hspi1, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return LSM6DSO_ERROR;
     }
     
     /* Receive the data. */
-    status = HAL_SPI_Receive(imu_spi, data, length, HAL_MAX_DELAY);
+    status = HAL_SPI_Receive(&hspi1, data, length, HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to read from the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return LSM6DSO_ERROR;
@@ -50,14 +51,14 @@ static int32_t _lsm6dso_write(uint16_t device_address, uint16_t register_address
     HAL_StatusTypeDef status;
     
     /* Send register address. */
-    status = HAL_SPI_Transmit(imu_spi, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
+    status = HAL_SPI_Transmit(&hspi1, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return LSM6DSO_ERROR;
     }
     
     /* Send data. */
-    status = HAL_SPI_Transmit(imu_spi, data, length, HAL_MAX_DELAY);
+    status = HAL_SPI_Transmit(&hspi1, data, length, HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return LSM6DSO_ERROR;
@@ -96,8 +97,7 @@ uint16_t imu_getGyroscopeData(LSM6DSO_Axes_t *axes) {
  * @brief initializes imu for reading
  * @return returns tx status for errors
  */
-uint16_t init_imu(SPI_HandleTypeDef *given_imu_spi) {
-    imu_spi = given_imu_spi;
+uint16_t init_imu() {
 
     LSM6DSO_IO_t io_config = {
         .BusType = LSM6DSO_SPI_4WIRES_BUS,
@@ -201,8 +201,8 @@ uint16_t read_imu() {
     memcpy(imu_accel_msg.data, &accel_data, sizeof(accel_data));
     memcpy(imu_gyro_msg.data, &gyro_data, sizeof(gyro_data));
 
-    queue_send(&can_outgoing, &imu_accel_msg);
-    queue_send(&can_outgoing, &imu_gyro_msg);
+    queue_send(&can_outgoing, &imu_accel_msg, TX_NO_WAIT);
+    queue_send(&can_outgoing, &imu_gyro_msg, TX_NO_WAIT);
 
     return U_SUCCESS;
 }
@@ -213,14 +213,14 @@ uint16_t read_imu() {
  * LIGHTNING SENSOR 
  */
 
-uint16_t init_lightning_sensor(SPI_HandleTypeDef *hspi) {
+uint16_t init_lightning_sensor() {
     as3935 = malloc(sizeof(as3935_t));
     if (as3935 == NULL) {
         PRINTLN_INFO("as3935 struct malloc failed.");
         return U_ERROR;
     }
 
-    as3935_init(as3935, hspi);
+    as3935_init(as3935, &hspi2);
 
     // calibrate
     as3935_calibrate_RCO(as3935);
@@ -252,7 +252,7 @@ uint16_t read_lightning_sensor() {
 
     memcpy(lightning_message.data, &lightning_data, sizeof(lightning_data));
 
-    queue_send(&can_outgoing, &lightning_message);
+    queue_send(&can_outgoing, &lightning_message, TX_NO_WAIT);
 
     return U_SUCCESS;
 }
@@ -302,7 +302,7 @@ static int32_t _lis2mdl_write(void *handle, uint8_t register_address, uint8_t *d
     return 0;
 }
 
-uint16_t init_magnetometer(SPI_HandleTypeDef *given_magnetometer_spi) {
+uint16_t init_magnetometer() {
     uint8_t status;
 
     lis2mdl_ctx = malloc(sizeof(stmdev_ctx_t));
@@ -311,7 +311,7 @@ uint16_t init_magnetometer(SPI_HandleTypeDef *given_magnetometer_spi) {
         return U_ERROR;
     }
 
-    lis2mdl_ctx->handle = given_magnetometer_spi;
+    lis2mdl_ctx->handle = &hspi3;
     lis2mdl_ctx->read_reg = _lis2mdl_read;
     lis2mdl_ctx->write_reg = _lis2mdl_write;
     
@@ -372,7 +372,7 @@ uint16_t read_magnetometer() {
 
     memcpy(message.data, &axes_data, sizeof(axes_data));
 
-    queue_send(&can_outgoing, &message);
+    queue_send(&can_outgoing, &message, TX_NO_WAIT);
 
     return U_SUCCESS;
 }

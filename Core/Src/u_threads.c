@@ -50,7 +50,7 @@ void can_incoming_thread(ULONG thread_input) {
         can_msg_t message;
 
         /* Process incoming messages */
-        while(queue_receive(&can_incoming, &message) == U_SUCCESS) {
+        while(queue_receive(&can_incoming, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
             inbox_can(&message);
         }
 
@@ -78,7 +78,7 @@ void can_outgoing_thread(ULONG thread_input) {
         uint8_t status;
 
         /* Process outgoing messages */
-        while(queue_receive(&can_outgoing, &message) == U_SUCCESS) {
+        while(queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
             status = can_send_msg(&can2, &message);
             if(status != U_SUCCESS) {
                 PRINTLN_INFO("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);

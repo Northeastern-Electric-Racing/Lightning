@@ -9,7 +9,7 @@
  * @brief initializes IMU for reading
  * @return returns tx status for errors
  */
-uint16_t init_imu(SPI_HandleTypeDef *given_imu_spi);
+uint16_t init_imu();
 
 /**
  * @brief reads and sends over CAN information from the IMU
@@ -21,7 +21,7 @@ uint16_t read_imu();
  * @brief initializes lightning sensor struct used for reading values
  * @return returns tx status for errors
  */
-uint16_t init_lightning_sensor(SPI_HandleTypeDef *hspi);
+uint16_t init_lightning_sensor();
 
 /**
  * @brief reads and sends over CAN information from the lightning sensor
@@ -33,7 +33,7 @@ uint16_t read_lightning_sensor();
  * @brief initializes Magnetometer for reading
  * @return returns tx status for errors
  */
-uint16_t init_magnetometer(SPI_HandleTypeDef *given_compass_spi);
+uint16_t init_magnetometer();
 
 /**
  * @brief reads and returns the information from magnetometer

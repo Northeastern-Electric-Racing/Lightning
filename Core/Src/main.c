@@ -120,7 +120,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 			}
 
 			/* Send message to incoming CAN queue */
-      queue_send(&can_incoming, &message);
+      queue_send(&can_incoming, &message, TX_NO_WAIT);
 		}
 	}
 }
@@ -174,18 +174,6 @@ int main(void)
   if (can2_init(&hfdcan2) != U_SUCCESS) {
     PRINTLN_INFO("Initialize CAN Failed.");
     Error_Handler();
-  }
-  
-  if (init_imu(&hspi1) != U_SUCCESS) {
-    PRINTLN_INFO("Initialize IMU Failed.");
-  }
-
-  if (init_lightning_sensor(&hspi2) != U_SUCCESS) {
-    PRINTLN_INFO("Initialize Lightning Sensor Failed.");
-  }
-
-  if (init_magnetometer(&hspi3) != U_SUCCESS) {
-    PRINTLN_INFO("Initialize Magnetometer Failed.");
   }
 
   /* USER CODE END 2 */

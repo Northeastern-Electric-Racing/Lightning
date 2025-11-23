@@ -4,7 +4,7 @@
 
 #include "c_utils.h"
 #include "as3935.h"
-#include "lsm6dso.h"
+#include "lsm6dsv_reg.h"
 #include "lis2mdl_reg.h"
 #include "u_can.h"
 #include "u_tx_debug.h"
@@ -14,144 +14,201 @@ extern SPI_HandleTypeDef hspi1; // imu
 extern SPI_HandleTypeDef hspi2; // lightning sensor
 extern SPI_HandleTypeDef hspi3; // magnetometer
 
-static LSM6DSO_Object_t imu;
+static stmdev_ctx_t imu;
 static as3935_t *as3935 = NULL;
 static stmdev_ctx_t *lis2mdl_ctx = NULL;
 
+static int16_t _float_to_int16(float value) {
+    if (value > 32767.0f) {
+        return 32767;
+    }
+
+    if (value < -32768.0f) {
+        return -32768;
+    }
+
+    return (int16_t) value;
+}
 
 /** 
  * IMU 
  */
 
-static int32_t _lsm6dso_read(uint16_t device_address, uint16_t register_address, uint8_t *data, uint16_t length) {
+ typedef struct {
+    float x;
+    float y;
+    float z;
+} LSM6DSV_Axes_t;
+
+static int32_t _lsm6dsv_read(void *handle, uint8_t register_address, uint8_t *data, uint16_t length) {
     /* For SPI reads, set MSB = 1 for read operation. */
     uint8_t spi_reg = (uint8_t)(register_address | 0x80);
     HAL_StatusTypeDef status;
+    SPI_HandleTypeDef *spi_handle = (SPI_HandleTypeDef *) handle;
     
     /* Send the register address we're trying to read from. */
-    status = HAL_SPI_Transmit(&hspi1, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
+    status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
-        return LSM6DSO_ERROR;
+        return -1;
     }
     
     /* Receive the data. */
-    status = HAL_SPI_Receive(&hspi1, data, length, HAL_MAX_DELAY);
+    status = HAL_SPI_Receive(spi_handle, data, length, HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to read from the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
-        return LSM6DSO_ERROR;
+        return -1;
     }
     
-    return LSM6DSO_OK;
+    return 0;
 }
 
-static int32_t _lsm6dso_write(uint16_t device_address, uint16_t register_address, uint8_t *data, uint16_t length) {
+static int32_t _lsm6dsv_write(void *handle, uint8_t register_address, uint8_t *data, uint16_t length) {
     /* For SPI writes, clear MSB = 0 for write operation. */
     uint8_t spi_reg = (uint8_t)(register_address & 0x7F);
     HAL_StatusTypeDef status;
+    SPI_HandleTypeDef *spi_handle = (SPI_HandleTypeDef *) handle;
     
     /* Send register address. */
-    status = HAL_SPI_Transmit(&hspi1, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
+    status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
-        return LSM6DSO_ERROR;
+        return -1;
     }
     
     /* Send data. */
-    status = HAL_SPI_Transmit(&hspi1, data, length, HAL_MAX_DELAY);
+    status = HAL_SPI_Transmit(spi_handle, data, length, HAL_MAX_DELAY);
     if(status != HAL_OK) {
         PRINTLN_INFO("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
-        return LSM6DSO_ERROR;
+        return -1;
     }
     
-    return LSM6DSO_OK;
-}
-
-int32_t _get_tick(void) {
-    return (int32_t)HAL_GetTick();
+    return 0;
 }
 
 void _delay(uint32_t delay) {
     return HAL_Delay(delay);
 }
 
-uint16_t imu_getAccelerometerData(LSM6DSO_Axes_t *axes) {
-    int status = LSM6DSO_ACC_GetAxes(&imu, axes);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to call LSM6DSO_ACC_GetAxes() (Status: %d).", status);
+uint16_t imu_getAccelerometerData(LSM6DSV_Axes_t *axes) {
+    int16_t buf[3];
+
+    int status = lsm6dsv_acceleration_raw_get(&imu, buf);
+
+    if(status != 0) {
+        PRINTLN_INFO("ERROR: Failed to call lsm6dsv_acceleration_raw_get() (Status: %d).", status);
         return U_ERROR;
     }
+
+    axes->x = lsm6dsv_from_fs2_to_mg(buf[0]);
+    axes->y = lsm6dsv_from_fs2_to_mg(buf[1]);
+    axes->z = lsm6dsv_from_fs2_to_mg(buf[2]);
+
     return U_SUCCESS;
 }
 
-uint16_t imu_getGyroscopeData(LSM6DSO_Axes_t *axes) {
-    int status = LSM6DSO_GYRO_GetAxes(&imu, axes);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to call LSM6DSO_GYRO_GetAxes() (Status: %d).", status);
+uint16_t imu_getGyroscopeData(LSM6DSV_Axes_t *axes) {
+    int16_t buf[3];
+
+    int status = lsm6dsv_angular_rate_raw_get(&imu, buf);
+
+    if(status != 0) {
+        PRINTLN_INFO("ERROR: Failed to call lsm6dso_angular_rate_raw_get() (Status: %d).", status);
         return U_ERROR;
     }
+
+    axes->x = lsm6dsv_from_fs250_to_mdps(buf[0]);
+    axes->y = lsm6dsv_from_fs250_to_mdps(buf[1]);
+    axes->z = lsm6dsv_from_fs250_to_mdps(buf[2]);
+
     return U_SUCCESS;
 }
 
-/**
- * @brief initializes imu for reading
- * @return returns tx status for errors
- */
 uint16_t init_imu() {
+    uint8_t whoami;
 
-    LSM6DSO_IO_t io_config = {
-        .BusType = LSM6DSO_SPI_4WIRES_BUS,
-        .WriteReg = _lsm6dso_write,
-        .ReadReg = _lsm6dso_read,
-        .GetTick = _get_tick,
-        .Delay = _delay
-    };
+    imu.read_reg = _lsm6dsv_read;
+    imu.read_reg = _lsm6dsv_write;
+    imu.mdelay = _delay;
+    imu.handle = &hspi1;
 
-    int status = LSM6DSO_RegisterBusIO(&imu, &io_config);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to call LSM6DSO_RegisterBusIO (Status: %d).", status);
+    int status = lis2mdl_device_id_get(&imu, &whoami);
+    if(status != 0) {
+        PRINTLN_ERROR("ERROR: Failed to call lis2mdl_device_id_get (Status: %d).", status);
         return U_ERROR;
     }
 
-    /* Initialize IMU. */
-    status = LSM6DSO_Init(&imu);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to run LSM6DS0_Init() (Status: %d).", status);
+    if (whoami != LIS2MDL_ID) {
+        PRINTLN_ERROR("ERROR: Failed whoami (Status: %d).", status);
         return U_ERROR;
     }
 
-    /* Setup IMU Accelerometer - default 104Hz */
-	status = LSM6DSO_ACC_SetOutputDataRate_With_Mode(&imu, 833.0f, LSM6DSO_ACC_HIGH_PERFORMANCE_MODE);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to run LSM6DSO_ACC_SetOutputDataRate_With_Mode (Status: %d).", status);
+    status = lsm6dsv_sw_reset(&imu);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_sw_reset (Status: %d).", status);
         return U_ERROR;
     }
 
-    /* Enable Accelerometer. */
-    status = LSM6DSO_ACC_Enable(&imu);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to run LSM6DSO_ACC_Enable() (Status: %d).", status);
-        return U_ERROR;
-    }
-	
-    /* Set Accelerometer Filter Mode. */
-	status = LSM6DSO_ACC_Set_Filter_Mode(&imu, 0, 3); // 3 = 'LSM6DSO_LP_ODR_DIV_45'
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to run LSM6DSO_ACC_Set_Filter_Mode() (Status: %d).", status);
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_xl_mode_set(&imu, LSM6DSV_XL_HIGH_PERFORMANCE_MD);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_xl_mode_set (Status: %d).", status);
         return U_ERROR;
     }
 
-	/* Setup IMU Gyroscope */
-	status = LSM6DSO_GYRO_SetOutputDataRate_With_Mode(&imu, 104.0f, LSM6DSO_GYRO_HIGH_PERFORMANCE_MODE);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to run LSM6DSO_GYRO_SetOutputDataRate_With_Mode() (Status: %d).", status);
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_xl_data_rate_set(&imu, LSM6DSV_EIS_960Hz);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_xl_data_rate_set (Status: %d).", status);
         return U_ERROR;
     }
 
-    /* Enable IMU Gyroscope. */
-	status = LSM6DSO_GYRO_Enable(&imu);
-    if(status != LSM6DSO_OK) {
-        PRINTLN_INFO("ERROR: Failed to run LSM6DSO_GYRO_Enable() (Status: %d).", status);
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_xl_data_rate_set(&imu, LSM6DSV_EIS_960Hz);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_xl_data_rate_set (Status: %d).", status);
+        return U_ERROR;
+    }
+
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_xl_full_scale_set(&imu, LSM6DSV_OIS_2g);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_xl_full_scale_set (Status: %d).", status);
+        return U_ERROR;
+    }
+
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_filt_xl_lp2_set(&imu, 1);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_filt_xl_lp2_set (Status: %d).", status);
+        return U_ERROR;
+    }
+
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_filt_xl_lp2_bandwidth_set(&imu, LSM6DSV_OIS_XL_LP_ULTRA_LIGHT);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_filt_xl_lp2_bandwidth_set (Status: %d).", status);
+        return U_ERROR;
+    }
+
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_gy_mode_set(&imu, LSM6DSV_GY_HIGH_PERFORMANCE_MD);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_gy_mode_set (Status: %d).", status);
+        return U_ERROR;
+    }
+
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_gy_data_rate_set(&imu, LSM6DSV_ODR_AT_120Hz);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_gy_data_rate_set (Status: %d).", status);
+        return U_ERROR;
+    }
+
+    /** TODO: just picked one that sounds good. double check this */
+    status = lsm6dsv_gy_full_scale_set(&imu, LSM6DSV_250dps);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: failed lsm6dsv_gy_full_scale_set (Status: %d).", status);
         return U_ERROR;
     }
 
@@ -159,8 +216,8 @@ uint16_t init_imu() {
 }
 
 uint16_t read_imu() {
-    LSM6DSO_Axes_t accel_axes;
-    LSM6DSO_Axes_t gyro_axes;
+    LSM6DSV_Axes_t accel_axes;
+    LSM6DSV_Axes_t gyro_axes;
 
     if (imu_getAccelerometerData(&accel_axes) != U_SUCCESS) {
         return U_ERROR;
@@ -176,9 +233,9 @@ uint16_t read_imu() {
 		int16_t accel_z;
 	} accel_data;
 
-    accel_data.accel_x = accel_axes.x;
-    accel_data.accel_y = accel_axes.y;
-    accel_data.accel_z = accel_axes.z;
+    accel_data.accel_x = _float_to_int16(accel_axes.x * 1000);
+    accel_data.accel_y = _float_to_int16(accel_axes.y * 1000);
+    accel_data.accel_z = _float_to_int16(accel_axes.z * 1000);
 
     struct __attribute__((__packed__)) {
 		int16_t gyro_x;
@@ -186,9 +243,9 @@ uint16_t read_imu() {
 		int16_t gyro_z;
 	} gyro_data;
 
-    gyro_data.gyro_x = gyro_axes.x;
-    gyro_data.gyro_y = gyro_axes.y;
-    gyro_data.gyro_z = gyro_axes.z;
+    gyro_data.gyro_x = _float_to_int16(gyro_axes.x * 1000);
+    gyro_data.gyro_y = _float_to_int16(gyro_axes.y * 1000);
+    gyro_data.gyro_z = _float_to_int16(gyro_axes.z * 1000);
 
     can_msg_t imu_accel_msg = { .id = 0xAA,
 				    .len = 6,
@@ -331,18 +388,6 @@ uint16_t init_magnetometer() {
     return U_SUCCESS;
 }
 
-static int16_t float_to_int16_saturate(float value) {
-    if (value > 32767.0f) {
-        return 32767;
-    }
-
-    if (value < -32768.0f) {
-        return -32768;
-    }
-
-    return (int16_t) value;
-}
-
 uint16_t read_magnetometer() {
     if (lis2mdl_ctx == NULL) {
         return U_ERROR;
@@ -364,9 +409,9 @@ uint16_t read_magnetometer() {
 		int16_t axes_3;
 	} axes_data;
 
-    axes_data.axes_1 = float_to_int16_saturate(lis2mdl_from_lsb_to_mgauss(raw_axes[0]) * 1000.0f);
-    axes_data.axes_2 = float_to_int16_saturate(lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f);
-    axes_data.axes_3 = float_to_int16_saturate(lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f);
+    axes_data.axes_1 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[0]) * 1000.0f);
+    axes_data.axes_2 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f);
+    axes_data.axes_3 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f);
 
     can_msg_t message = { .id = 0xAD, .len = 6, .data = { 0 } };
 

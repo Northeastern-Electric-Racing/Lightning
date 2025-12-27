@@ -81,7 +81,7 @@ void can_outgoing_thread(ULONG thread_input) {
         while(queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
             status = can_send_msg(&can2, &message);
             if(status != U_SUCCESS) {
-                PRINTLN_INFO("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
+                PRINTLN_WARNING("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
             }
         }
 
@@ -105,15 +105,15 @@ void sensors_thread(ULONG thread_input) {
     
     while (1) {
         if (read_lightning_sensor() != U_SUCCESS) {
-            PRINTLN_INFO("Reading & Sending Lightning Sensor Data Failed.");
+            PRINTLN_ERROR("Reading & Sending Lightning Sensor Data Failed.");
         }
 
         if (read_imu() != U_SUCCESS) {
-            PRINTLN_INFO("Reading & Sending IMU Data Failed.");
+            PRINTLN_ERROR("Reading & Sending IMU Data Failed.");
         }
 
         if (read_magnetometer() != U_SUCCESS) {
-            PRINTLN_INFO("Reading & Sending Magnetometer Data Failed.");
+            PRINTLN_ERROR("Reading & Sending Magnetometer Data Failed.");
         }
 
         tx_thread_sleep(_sensors_thread.sleep);
@@ -150,7 +150,7 @@ void gpio_lights_thread(ULONG thread_input) {
                 HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
                 break;
             default:
-                PRINTLN_INFO("State machine state is not in range %d", state);
+                PRINTLN_WARNING("State machine state is not in range %d", state);
                 break;
         }
 

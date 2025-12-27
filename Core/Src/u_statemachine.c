@@ -8,7 +8,7 @@ uint8_t set_statemachine(Lightning_Board_Light_Status state) {
     int status = mutex_get(&state_machine_mutex);
 
     if (status != TX_SUCCESS) {
-        PRINTLN_INFO("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        PRINTLN_ERROR("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
         return U_ERROR;
     }
 
@@ -17,7 +17,7 @@ uint8_t set_statemachine(Lightning_Board_Light_Status state) {
     status = mutex_put(&state_machine_mutex);
 
     if (status != TX_SUCCESS) {
-        PRINTLN_INFO("ERROR: Failed to put statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        PRINTLN_ERROR("ERROR: Failed to put statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
         return U_ERROR;
     }
 
@@ -28,7 +28,7 @@ Lightning_Board_Light_Status get_current_state() {
     int status = mutex_get(&state_machine_mutex);
 
     if (status != TX_SUCCESS) {
-        PRINTLN_INFO("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        PRINTLN_ERROR("ERROR: Failed to get statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
         return LIGHT_OFF;
     }
     
@@ -37,7 +37,7 @@ Lightning_Board_Light_Status get_current_state() {
     status = mutex_put(&state_machine_mutex);
 
     if (status != TX_SUCCESS) {
-        PRINTLN_INFO("ERROR: Failed to put statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
+        PRINTLN_ERROR("ERROR: Failed to put statemachine mutex. (Status: %d/%s).", status, tx_status_toString(status));
         return state;
     }
 

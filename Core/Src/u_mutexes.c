@@ -11,7 +11,7 @@ mutex_t state_machine_mutex = {
 
 uint8_t mutexes_init() {
     if (create_mutex(&state_machine_mutex) != U_SUCCESS) {
-        PRINTLN_INFO("mutexes_init() failed.");
+        PRINTLN_ERROR("mutexes_init() failed.");
         return U_ERROR;
     }
 

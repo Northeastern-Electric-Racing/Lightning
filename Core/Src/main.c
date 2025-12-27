@@ -172,7 +172,7 @@ int main(void)
 
   /* Init Functions */
   if (can2_init(&hfdcan2) != U_SUCCESS) {
-    PRINTLN_INFO("Initialize CAN Failed.");
+    PRINTLN_ERROR("Initialize CAN Failed.");
     Error_Handler();
   }
 

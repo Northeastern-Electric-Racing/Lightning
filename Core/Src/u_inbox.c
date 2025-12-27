@@ -8,5 +8,8 @@ void inbox_can(can_msg_t *message) {
             Lightning_Board_Light_Status state = message->data[0];
             set_statemachine(state);
             break;
+        default:
+            PRINTLN_WARNING("Unknown Inbox Message. ID: %lu", message->id);
+            break;
     }
 }

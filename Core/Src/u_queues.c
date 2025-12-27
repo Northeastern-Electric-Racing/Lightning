@@ -19,12 +19,12 @@ queue_t can_outgoing = {
 
 uint8_t queues_init(TX_BYTE_POOL *byte_pool) {
     if (create_queue(byte_pool, &can_incoming) != U_SUCCESS) {
-        PRINTLN_INFO("CAN Incoming queue creation failed.");
+        PRINTLN_ERROR("CAN Incoming queue creation failed.");
         return U_ERROR;
     }
 
     if (create_queue(byte_pool, &can_outgoing) != U_SUCCESS) {
-        PRINTLN_INFO("CAN Outgoing queue creation failed.");
+        PRINTLN_ERROR("CAN Outgoing queue creation failed.");
         return U_ERROR;
     }
 

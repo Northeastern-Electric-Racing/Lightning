@@ -34,7 +34,7 @@ static int16_t _float_to_int16(float value) {
  * IMU 
  */
 
- typedef struct {
+typedef struct {
     float x;
     float y;
     float z;
@@ -48,15 +48,15 @@ static int32_t _lsm6dsv_read(void *handle, uint8_t register_address, uint8_t *da
     
     /* Send the register address we're trying to read from. */
     status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
     /* Receive the data. */
     status = HAL_SPI_Receive(spi_handle, data, length, HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to read from the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to read from the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
@@ -71,15 +71,15 @@ static int32_t _lsm6dsv_write(void *handle, uint8_t register_address, uint8_t *d
     
     /* Send register address. */
     status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
     /* Send data. */
     status = HAL_SPI_Transmit(spi_handle, data, length, HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
@@ -93,10 +93,10 @@ void _delay(uint32_t delay) {
 uint16_t imu_getAccelerometerData(LSM6DSV_Axes_t *axes) {
     int16_t buf[3];
 
-    int status = lsm6dsv_acceleration_raw_get(&imu, buf);
+    uint8_t status = lsm6dsv_acceleration_raw_get(&imu, buf);
 
-    if(status != 0) {
-        PRINTLN_INFO("ERROR: Failed to call lsm6dsv_acceleration_raw_get() (Status: %d).", status);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: Failed to call lsm6dsv_acceleration_raw_get() (Status: %d).", status);
         return U_ERROR;
     }
 
@@ -110,10 +110,10 @@ uint16_t imu_getAccelerometerData(LSM6DSV_Axes_t *axes) {
 uint16_t imu_getGyroscopeData(LSM6DSV_Axes_t *axes) {
     int16_t buf[3];
 
-    int status = lsm6dsv_angular_rate_raw_get(&imu, buf);
+    uint8_t status = lsm6dsv_angular_rate_raw_get(&imu, buf);
 
-    if(status != 0) {
-        PRINTLN_INFO("ERROR: Failed to call lsm6dso_angular_rate_raw_get() (Status: %d).", status);
+    if (status != 0) {
+        PRINTLN_ERROR("ERROR: Failed to call lsm6dso_angular_rate_raw_get() (Status: %d).", status);
         return U_ERROR;
     }
 
@@ -131,7 +131,7 @@ uint16_t init_imu() {
     imu.handle = &hspi1;
 
     uint8_t id;
-    int status = lsm6dsv_device_id_get(&imu, &id);
+    uint8_t status = lsm6dsv_device_id_get(&imu, &id);
 
     if (status != 0) {
         PRINTLN_ERROR("Failed to call lsm6dsv_device_id_get() (Status: %d).", status);
@@ -300,33 +300,33 @@ static int32_t _lis2mdl_read(void *handle, uint8_t register_address, uint8_t *da
     
     /* Send the register address we're trying to read from. */
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *) handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
     /* Receive the data. */
     status = HAL_SPI_Receive((SPI_HandleTypeDef *) handle, data, length, HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to read from the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to read from the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
     return 0;
 }
 
-static int32_t _lis2mdl_write(void *handle, uint8_t register_address, uint8_t *data, uint16_t length){
+static int32_t _lis2mdl_write(void *handle, uint8_t register_address, const uint8_t *data, uint16_t length){
     HAL_StatusTypeDef status;
 
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *)handle, &register_address, sizeof(register_address), HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
     
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *)handle, data, length, HAL_MAX_DELAY);
-    if(status != HAL_OK) {
-        PRINTLN_INFO("ERROR: Failed to write to the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    if (status != HAL_OK) {
+        PRINTLN_ERROR("ERROR: Failed to write to the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
 
@@ -338,7 +338,7 @@ uint16_t init_magnetometer() {
 
     lis2mdl_ctx = malloc(sizeof(stmdev_ctx_t));
     if (lis2mdl_ctx == NULL) {
-        PRINTLN_INFO("lis2mdl_ctx struct malloc failed.");
+        PRINTLN_ERROR("lis2mdl_ctx struct malloc failed.");
         return U_ERROR;
     }
 
@@ -349,7 +349,7 @@ uint16_t init_magnetometer() {
     lis2mdl_device_id_get(lis2mdl_ctx, &status);
 
     if (status != LIS2MDL_ID) {
-        PRINTLN_INFO("Device ID is not for LIS2MDL (Status %d/%s)", status, hal_status_toString(status));
+        PRINTLN_ERROR("Device ID is not for LIS2MDL (Status %d/%s)", status, hal_status_toString(status));
         return U_ERROR;
     }
 
@@ -387,7 +387,11 @@ uint16_t read_magnetometer() {
     axes_data.axes_2 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f);
     axes_data.axes_3 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f);
 
-    can_msg_t message = { .id = MAGNOMETER_MSG_ID, .len = 6, .data = { 0 } };
+    can_msg_t message = { 
+        .id = MAGNOMETER_MSG_ID, 
+        .len = 6, 
+        .data = { 0 } 
+    };
 
     memcpy(message.data, &axes_data, sizeof(axes_data));
 

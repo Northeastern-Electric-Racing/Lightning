@@ -19,18 +19,6 @@ static stmdev_ctx_t imu;
 static as3935_t *as3935 = NULL;
 static stmdev_ctx_t *lis2mdl_ctx = NULL;
 
-static int16_t _float_to_int16(float value) {
-    if (value > 32767.0f) {
-        return 32767;
-    }
-
-    if (value < -32768.0f) {
-        return -32768;
-    }
-
-    return (int16_t) value;
-}
-
 /**
  * IMU
  */

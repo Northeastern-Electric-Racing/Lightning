@@ -9,6 +9,7 @@
 #include "u_can.h"
 #include "u_tx_debug.h"
 #include "u_queues.h"
+#include "can_messages_tx.h"
 
 extern SPI_HandleTypeDef hspi1; // imu
 extern SPI_HandleTypeDef hspi2; // lightning sensor
@@ -30,8 +31,8 @@ static int16_t _float_to_int16(float value) {
     return (int16_t) value;
 }
 
-/** 
- * IMU 
+/**
+ * IMU
  */
 
 typedef struct {
@@ -45,21 +46,21 @@ static int32_t _lsm6dsv_read(void *handle, uint8_t register_address, uint8_t *da
     uint8_t spi_reg = (uint8_t)(register_address | 0x80);
     HAL_StatusTypeDef status;
     SPI_HandleTypeDef *spi_handle = (SPI_HandleTypeDef *) handle;
-    
+
     /* Send the register address we're trying to read from. */
     status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     /* Receive the data. */
     status = HAL_SPI_Receive(spi_handle, data, length, HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to read from the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -68,21 +69,21 @@ static int32_t _lsm6dsv_write(void *handle, uint8_t register_address, uint8_t *d
     uint8_t spi_reg = (uint8_t)(register_address & 0x7F);
     HAL_StatusTypeDef status;
     SPI_HandleTypeDef *spi_handle = (SPI_HandleTypeDef *) handle;
-    
+
     /* Send register address. */
     status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     /* Send data. */
     status = HAL_SPI_Transmit(spi_handle, data, length, HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -201,47 +202,16 @@ uint16_t read_imu() {
         return U_ERROR;
     }
 
-    struct __attribute__((__packed__)) {
-		int16_t accel_x;
-		int16_t accel_y;
-		int16_t accel_z;
-	} accel_data;
-
-    accel_data.accel_x = _float_to_int16(accel_axes.x * 1000);
-    accel_data.accel_y = _float_to_int16(accel_axes.y * 1000);
-    accel_data.accel_z = _float_to_int16(accel_axes.z * 1000);
-
-    struct __attribute__((__packed__)) {
-		int16_t gyro_x;
-		int16_t gyro_y;
-		int16_t gyro_z;
-	} gyro_data;
-
-    gyro_data.gyro_x = _float_to_int16(gyro_axes.x * 1000);
-    gyro_data.gyro_y = _float_to_int16(gyro_axes.y * 1000);
-    gyro_data.gyro_z = _float_to_int16(gyro_axes.z * 1000);
-
-    can_msg_t imu_accel_msg = { .id = IMU_ACCEL_MSG_ID,
-				    .len = 6,
-				    .data = { 0 } };
-    
-	can_msg_t imu_gyro_msg = { .id = IMU_GYRO_MSG_ID,
-				   .len = 6,
-				   .data = { 0 } };
-
-    memcpy(imu_accel_msg.data, &accel_data, sizeof(accel_data));
-    memcpy(imu_gyro_msg.data, &gyro_data, sizeof(gyro_data));
-
-    queue_send(&can_outgoing, &imu_accel_msg, TX_NO_WAIT);
-    queue_send(&can_outgoing, &imu_gyro_msg, TX_NO_WAIT);
+    send_lightning_board_imu_acceleration_data(accel_axes.x, accel_axes.y, accel_axes.z);
+    send_lightning_board_imu_gyro_data(gyro_axes.x, gyro_axes.y, gyro_axes.z);
 
     return U_SUCCESS;
 }
 
 
 
-/** 
- * LIGHTNING SENSOR 
+/**
+ * LIGHTNING SENSOR
  */
 
 uint16_t init_lightning_sensor() {
@@ -268,50 +238,38 @@ uint16_t read_lightning_sensor() {
     }
 
     uint8_t interrupt = as3935_get_interrupt(as3935);
+    uint8_t distance = as3935_get_distance(as3935);
+    uint32_t energy = as3935_get_energy(as3935);
 
-    can_msg_t lightning_message = { .id = LIGHTNING_SENSOR_MSG_ID, .len = 8, .data = { 0 } };
-
-    struct __attribute__((__packed__)) {
-		uint8_t interrupt;
-		uint8_t distance;
-		uint32_t energy;
-	} lightning_data;
-
-    lightning_data.interrupt = interrupt;
-    lightning_data.distance = as3935_get_distance(as3935);
-    lightning_data.energy = as3935_get_energy(as3935);
-
-    memcpy(lightning_message.data, &lightning_data, sizeof(lightning_data));
-
-    queue_send(&can_outgoing, &lightning_message, TX_NO_WAIT);
+    send_lightning_board_lightning_sensor_information(interrupt,distance, energy);
 
     return U_SUCCESS;
 }
 
 
 
-/** 
- * COMPASS STUFF 
+/**
+ * COMPASS STUFF
  */
 
 static int32_t _lis2mdl_read(void *handle, uint8_t register_address, uint8_t *data, uint16_t length) {
     uint8_t spi_reg = (uint8_t)(register_address | 0x80);
     HAL_StatusTypeDef status;
-    
+
     /* Send the register address we're trying to read from. */
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *) handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     /* Receive the data. */
     status = HAL_SPI_Receive((SPI_HandleTypeDef *) handle, data, length, HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to read from the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -323,7 +281,7 @@ static int32_t _lis2mdl_write(void *handle, uint8_t register_address, const uint
         PRINTLN_ERROR("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
-    
+
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *)handle, data, length, HAL_MAX_DELAY);
     if (status != HAL_OK) {
         PRINTLN_ERROR("ERROR: Failed to write to the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
@@ -345,7 +303,7 @@ uint16_t init_magnetometer() {
     lis2mdl_ctx->handle = &hspi3;
     lis2mdl_ctx->read_reg = _lis2mdl_read;
     lis2mdl_ctx->write_reg = _lis2mdl_write;
-    
+
     lis2mdl_device_id_get(lis2mdl_ctx, &status);
 
     if (status != LIS2MDL_ID) {
@@ -367,7 +325,7 @@ uint16_t read_magnetometer() {
         return U_ERROR;
     }
 
-    int16_t raw_axes[3];    
+    int16_t raw_axes[3];
 
     uint8_t data_ready;
     lis2mdl_mag_data_ready_get(lis2mdl_ctx, &data_ready);
@@ -377,25 +335,7 @@ uint16_t read_magnetometer() {
 
     lis2mdl_magnetic_raw_get(lis2mdl_ctx, raw_axes);
 
-    struct __attribute__((__packed__)) {
-		int16_t axes_1;
-		int16_t axes_2;
-		int16_t axes_3;
-	} axes_data;
-
-    axes_data.axes_1 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[0]) * 1000.0f);
-    axes_data.axes_2 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[1]) * 1000.0f);
-    axes_data.axes_3 = _float_to_int16(lis2mdl_from_lsb_to_mgauss(raw_axes[2]) * 1000.0f);
-
-    can_msg_t message = { 
-        .id = MAGNOMETER_MSG_ID, 
-        .len = 6, 
-        .data = { 0 } 
-    };
-
-    memcpy(message.data, &axes_data, sizeof(axes_data));
-
-    queue_send(&can_outgoing, &message, TX_NO_WAIT);
+    send_lightning_board_magnometer_sensor_information(lis2mdl_from_lsb_to_mgauss(raw_axes[0]), lis2mdl_from_lsb_to_mgauss(raw_axes[1]), lis2mdl_from_lsb_to_mgauss(raw_axes[2]));
 
     return U_SUCCESS;
 }

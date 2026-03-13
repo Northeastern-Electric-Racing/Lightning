@@ -79,6 +79,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Core/Src/u_queues.c"
     "./Core/Src/u_can.c"
     "./Core/Src/u_mutexes.c"
+
+    # gen
+    "./Core/Src/can_messages_tx.c"
 )
 
 # Add include paths
@@ -108,5 +111,3 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
-
-

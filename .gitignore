@@ -81,3 +81,5 @@ ctrlp.root
 
 # Notes
 .notes.md
+
+.cache/

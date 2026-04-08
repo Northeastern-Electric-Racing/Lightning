@@ -14,19 +14,29 @@
 /* Default Thread */
 static thread_t _default_thread = {
         .name       = "Default Thread",  /* Name */
-        .size       = 512,               /* Stack Size (in bytes) */
-        .priority   = 7,                 /* Priority */
-        .threshold  = 9,                 /* Preemption Threshold */
+        .size       = 4096,               /* Stack Size (in bytes) */
+        .priority   = 0,                 /* Priority */
+        .threshold  = 0,                 /* Preemption Threshold */
         .time_slice = TX_NO_TIME_SLICE,  /* Time Slice */
         .auto_start = TX_AUTO_START,     /* Auto Start */
         .sleep      = 10,                /* Sleep (in ticks) */
         .function   = default_thread     /* Thread Function */
     };
 void default_thread(ULONG thread_input) {
+
+    bool alt = true;
     
     while(1) {
         /* Kick the watchdogs (sad) */
-        HAL_IWDG_Refresh(&hiwdg); // Internal Watchdog
+        //HAL_IWDG_Refresh(&hiwdg); // Internal Watchdog
+
+        if (alt) {
+			printf(".\n");
+		} else {
+			printf("..\n");
+		}
+
+		alt = !alt;
 
         /* Sleep Thread for specified number of ticks. */
         tx_thread_sleep(_default_thread.sleep);
@@ -36,9 +46,9 @@ void default_thread(ULONG thread_input) {
 /* CAN Incoming Thread. Processes incoming messages. */
 static thread_t _can_incoming_thread = {
         .name       = "CAN Incoming Thread",     /* Name */
-        .size       = 512,                       /* Stack Size (in bytes) */
-        .priority   = 5,                         /* Priority */
-        .threshold  = 9,                         /* Preemption Threshold */
+        .size       = 4096,                       /* Stack Size (in bytes) */
+        .priority   = 0,                         /* Priority */
+        .threshold  = 0,                         /* Preemption Threshold */
         .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
         .auto_start = TX_AUTO_START,             /* Auto Start */
         .sleep      = 10,                        /* Sleep (in ticks) */
@@ -62,9 +72,9 @@ void can_incoming_thread(ULONG thread_input) {
 /* CAN Outgoing Thread. Sends outgoing CAN messages. */
 static thread_t _can_outgoing_thread = {
     .name       = "CAN Outgoing Thread",     /* Name */
-    .size       = 512,                       /* Stack Size (in bytes) */
-    .priority   = 9,                         /* Priority */
-    .threshold  = 9,                         /* Preemption Threshold */
+    .size       = 4096,                       /* Stack Size (in bytes) */
+    .priority   = 0,                         /* Priority */
+    .threshold  = 0,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
     .auto_start = TX_AUTO_START,             /* Auto Start */
     .sleep      = 10,                        /* Sleep (in ticks) */
@@ -93,9 +103,9 @@ void can_outgoing_thread(ULONG thread_input) {
 /* Sensors Thread. Reads sensors's information. */
 static thread_t _sensors_thread = {
     .name       = "Sensors Thread",          /* Name */
-    .size       = 512,                       /* Stack Size (in bytes) */
-    .priority   = 9,                         /* Priority */
-    .threshold  = 9,                         /* Preemption Threshold */
+    .size       = 4096,                       /* Stack Size (in bytes) */
+    .priority   = 0,                         /* Priority */
+    .threshold  = 0,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
     .auto_start = TX_AUTO_START,             /* Auto Start */
     .sleep      = 500,                       /* Sleep (in ticks) */
@@ -108,9 +118,9 @@ void sensors_thread(ULONG thread_input) {
             PRINTLN_ERROR("Reading & Sending Lightning Sensor Data Failed.");
         }
 
-        if (read_imu() != U_SUCCESS) {
-            PRINTLN_ERROR("Reading & Sending IMU Data Failed.");
-        }
+        // if (read_imu() != U_SUCCESS) {
+            // PRINTLN_ERROR("Reading & Sending IMU Data Failed.");
+        // }
 
         if (read_magnetometer() != U_SUCCESS) {
             PRINTLN_ERROR("Reading & Sending Magnetometer Data Failed.");
@@ -123,9 +133,9 @@ void sensors_thread(ULONG thread_input) {
 /* GPIO Lights */
 static thread_t _gpio_lights_thread = {
     .name       = "GPIO Lights",             /* Name */
-    .size       = 512,                       /* Stack Size (in bytes) */
-    .priority   = 5,                         /* Priority */
-    .threshold  = 9,                         /* Preemption Threshold */
+    .size       = 4096,                       /* Stack Size (in bytes) */
+    .priority   = 0,                         /* Priority */
+    .threshold  = 0,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
     .auto_start = TX_AUTO_START,             /* Auto Start */
     .sleep      = 500,                       /* Sleep (in ticks) */

@@ -96,29 +96,35 @@ int _write(int file, char *ptr, int len)
 /* Callback for any FIFO0 interrupt stuff */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
+  //PRINTLN_INFO("HAL_FDCAN callback triggered");
 
-	/* If a message has just been received... */
+	/* If a message has just been recieved... */
 	if (RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
 	{
 		can_msg_t message;
 		FDCAN_RxHeaderTypeDef rx_header;
 
-		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, message.data) == HAL_OK)
+    /* Get the message. */
+    HAL_StatusTypeDef status = HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, message.data);
+    if(status != HAL_OK) {
+      PRINTLN_ERROR("Failed to call HAL_FDCAN_GetRxMessage() (Status: %d/%s).", status, hal_status_toString(status));
+      return;
+    }
+
+    /* Pack the message into the struct. */
+    message.id = rx_header.Identifier;
+		message.id_is_extended = (rx_header.IdType == FDCAN_EXTENDED_ID);
+	  message.len = (uint8_t)rx_header.DataLength;
+
+		/* Check message size */
+		if (rx_header.DataLength > 8)
 		{
-			message.id = rx_header.Identifier;
-			message.id_is_extended = (rx_header.IdType == FDCAN_EXTENDED_ID);
-			message.len = (uint8_t)rx_header.DataLength;
-
-			/* Check size */
-			if (rx_header.DataLength > 8)
-			{
-				printf("[main.c/HAL_FDCAN_RxFifo0Callback()] ERROR: Received message is larger than 8 bytes.\n");
-				return;
-			}
-
-			/* Send message to incoming CAN queue */
-      queue_send(&can_incoming, &message, TX_NO_WAIT);
+			PRINTLN_ERROR("Recieved CAN message is larger than 8 bytes (rx_header.DataLength: %ld, id: 0x%lX).", rx_header.DataLength, rx_header.Identifier);
+			return;
 		}
+
+		/* Send message to incoming CAN queue */
+    queue_send(&can_incoming, &message, TX_NO_WAIT);
 	}
 }
 
@@ -333,7 +339,7 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.DataSyncJumpWidth = 1;
   hfdcan2.Init.DataTimeSeg1 = 1;
   hfdcan2.Init.DataTimeSeg2 = 1;
-  hfdcan2.Init.StdFiltersNbr = 0;
+  hfdcan2.Init.StdFiltersNbr = 1;
   hfdcan2.Init.ExtFiltersNbr = 0;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)

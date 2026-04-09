@@ -229,6 +229,8 @@ uint16_t read_lightning_sensor() {
     uint8_t distance = as3935_get_distance(as3935);
     uint32_t energy = as3935_get_energy(as3935);
 
+    printf("Lightning: %d, %d, %ld", interrupt, distance, energy);
+
     send_lightning_board_lightning_sensor_information(interrupt,distance, energy);
 
     return U_SUCCESS;
@@ -322,6 +324,8 @@ uint16_t read_magnetometer() {
     }
 
     lis2mdl_magnetic_raw_get(lis2mdl_ctx, raw_axes);
+
+    printf("mag: %d, %d, %d", raw_axes[0], raw_axes[1], raw_axes[2]);
 
     send_lightning_board_magnometer_sensor_information(lis2mdl_from_lsb_to_mgauss(raw_axes[0]), lis2mdl_from_lsb_to_mgauss(raw_axes[1]), lis2mdl_from_lsb_to_mgauss(raw_axes[2]));
 

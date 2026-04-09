@@ -9,7 +9,7 @@
 #include "u_mutexes.h"
 #include "u_test.h"
 
-#define TEST_MODE 1
+#define TEST_MODE 0
 
 /* Default Thread */
 static thread_t _default_thread = {
@@ -138,7 +138,7 @@ static thread_t _gpio_lights_thread = {
     .threshold  = 0,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
     .auto_start = TX_AUTO_START,             /* Auto Start */
-    .sleep      = 500,                       /* Sleep (in ticks) */
+    .sleep      = 10,                        /* Sleep (in ticks) */
     .function   = gpio_lights_thread         /* Thread Function */
 };
 void gpio_lights_thread(ULONG thread_input) {

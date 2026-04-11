@@ -10,6 +10,16 @@
 #include "u_tx_debug.h"
 #include "u_queues.h"
 #include "can_messages_tx.h"
+#include "main.h"
+
+#define IMU_NSS_PORT SPI1_NSS_GPIO_Port
+#define IMU_NSS_PIN  SPI1_NSS_Pin
+
+#define LIG_NSS_PORT SPI2_NSS_GPIO_Port
+#define LIG_NSS_PIN  SPI2_NSS_Pin
+
+#define MAG_NSS_PORT SPI3_NSS_GPIO_Port
+#define MAG_NSS_PIN  SPI3_NSS_Pin
 
 extern SPI_HandleTypeDef hspi1; // imu
 extern SPI_HandleTypeDef hspi2; // lightning sensor
@@ -29,54 +39,70 @@ typedef struct {
     float z;
 } LSM6DSV_Axes_t;
 
-static int32_t _lsm6dsv_read(void *handle, uint8_t register_address, uint8_t *data, uint16_t length) {
-    /* For SPI reads, set MSB = 1 for read operation. */
-    uint8_t spi_reg = (uint8_t)(register_address | 0x80);
+/* Wrapper for lsm6dsv SPI reading. */
+static int32_t _lsm6dsv_read(void* spi_handle, uint8_t reg, uint8_t* buffer, uint16_t length) {
+    
+    SPI_HandleTypeDef *handle = (SPI_HandleTypeDef *)spi_handle;
     HAL_StatusTypeDef status;
-    SPI_HandleTypeDef *spi_handle = (SPI_HandleTypeDef *) handle;
 
-    /* Send the register address we're trying to read from. */
-    status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
-    if (status != HAL_OK) {
-        PRINTLN_ERROR("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    /* Select the IMU by setting its CS pin LOW. */
+    HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_RESET);
+    
+    /* Tell the IMU you want to read from 'reg'. */
+    uint8_t spi_reg = (uint8_t)(reg | 0b10000000); // Bits 0 through 6 store 'reg' (the register address), while Bit 7 lets you chose if it's a read or write operation (1=read, 0=write).
+    status = HAL_SPI_Transmit(handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
+    if(status != HAL_OK) {
+        PRINTLN_ERROR("Failed to call HAL_SPI_Transmit() to write the first SPI command (Status: %d/%s).", status, hal_status_toString(status));
+        HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_SET);
         return -1;
     }
 
-    /* Receive the data. */
-    status = HAL_SPI_Receive(spi_handle, data, length, HAL_MAX_DELAY);
-    if (status != HAL_OK) {
-        PRINTLN_ERROR("ERROR: Failed to read from the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    /* Read from 'reg'. */
+    status = HAL_SPI_Receive(handle, buffer, length, HAL_MAX_DELAY);
+    if(status != HAL_OK) {
+        PRINTLN_ERROR("Failed to call HAL_SPI_Receive() to read from 'reg' (Status: %d/%s).", status, hal_status_toString(status));
+        HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_SET);
         return -1;
     }
 
+    /* Deselect the IMU by setting its CS pin HIGH. */
+    HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_SET);
+    
     return 0;
 }
 
-static int32_t _lsm6dsv_write(void *handle, uint8_t register_address, uint8_t *data, uint16_t length) {
-    /* For SPI writes, clear MSB = 0 for write operation. */
-    uint8_t spi_reg = (uint8_t)(register_address & 0x7F);
+/* Wrapper for lsm6dsv SPI writing. */
+static int32_t _lsm6dsv_write(void* spi_handle, uint8_t reg, const uint8_t* data, uint16_t length) {
+    SPI_HandleTypeDef *handle = (SPI_HandleTypeDef *)spi_handle;
     HAL_StatusTypeDef status;
-    SPI_HandleTypeDef *spi_handle = (SPI_HandleTypeDef *) handle;
 
-    /* Send register address. */
-    status = HAL_SPI_Transmit(spi_handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
-    if (status != HAL_OK) {
-        PRINTLN_ERROR("ERROR: Failed to send register address to lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    /* Select the IMU by setting its CS pin LOW. */
+    HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_RESET);
+    
+    /* Tell the IMU you want to write to 'reg'. */
+    uint8_t spi_reg = (uint8_t)(reg & 0b01111111); // Bits 0 through 6 store 'reg' (the register address), while Bit 7 lets you chose if it's a read or write operation (1=read, 0=write).
+    status = HAL_SPI_Transmit(handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
+    if(status != HAL_OK) {
+        PRINTLN_ERROR("Failed to call HAL_SPI_Transmit() to write the first SPI command (Status: %d/%s).", status, hal_status_toString(status));
+        HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_SET);
         return -1;
     }
 
-    /* Send data. */
-    status = HAL_SPI_Transmit(spi_handle, data, length, HAL_MAX_DELAY);
-    if (status != HAL_OK) {
-        PRINTLN_ERROR("ERROR: Failed to write to the lsm6dso over SPI (Status: %d/%s).", status, hal_status_toString(status));
+    /* Write to 'reg'. */
+    status = HAL_SPI_Transmit(handle, data, length, HAL_MAX_DELAY);
+    if(status != HAL_OK) {
+        PRINTLN_ERROR("Failed to call HAL_SPI_Transmit() to write to 'reg' (Status: %d/%s).", status, hal_status_toString(status));
+        HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_SET);
         return -1;
     }
+
+    HAL_GPIO_WritePin(IMU_NSS_PORT, IMU_NSS_PIN, GPIO_PIN_SET);
 
     return 0;
 }
 
 void _delay(uint32_t delay) {
-    return HAL_Delay(delay);
+    HAL_Delay(delay);
 }
 
 uint16_t imu_getAccelerometerData(LSM6DSV_Axes_t *axes) {
@@ -115,7 +141,7 @@ uint16_t imu_getGyroscopeData(LSM6DSV_Axes_t *axes) {
 
 uint16_t init_imu() {
     imu.read_reg = _lsm6dsv_read;
-    imu.read_reg = _lsm6dsv_write;
+    imu.write_reg = _lsm6dsv_write;
     imu.mdelay = _delay;
     imu.handle = &hspi1;
 
@@ -229,7 +255,7 @@ uint16_t read_lightning_sensor() {
     uint8_t distance = as3935_get_distance(as3935);
     uint32_t energy = as3935_get_energy(as3935);
 
-    printf("Lightning: %d, %d, %ld", interrupt, distance, energy);
+    printf("Lightning: %d, %d, %ld\n", interrupt, distance, energy);
 
     send_lightning_board_lightning_sensor_information(interrupt,distance, energy);
 
@@ -246,9 +272,18 @@ static int32_t _lis2mdl_read(void *handle, uint8_t register_address, uint8_t *da
     uint8_t spi_reg = (uint8_t)(register_address | 0x80);
     HAL_StatusTypeDef status;
 
+    printf("Before data: ");
+    for (int i = 0; i < length; i++) {
+        printf("%d ", data[i]);
+    }
+    printf("\n\n");
+    
+    HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_RESET);
+
     /* Send the register address we're trying to read from. */
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *) handle, &spi_reg, sizeof(spi_reg), HAL_MAX_DELAY);
     if (status != HAL_OK) {
+        HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_SET);
         PRINTLN_ERROR("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
@@ -256,9 +291,18 @@ static int32_t _lis2mdl_read(void *handle, uint8_t register_address, uint8_t *da
     /* Receive the data. */
     status = HAL_SPI_Receive((SPI_HandleTypeDef *) handle, data, length, HAL_MAX_DELAY);
     if (status != HAL_OK) {
+        HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_SET);
         PRINTLN_ERROR("ERROR: Failed to read from the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
+
+    HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_SET);
+
+    printf("After data: ");
+    for (int i = 0; i < length; i++) {
+        printf("%d ", data[i]);
+    }
+    printf("\n\n");
 
     return 0;
 }
@@ -266,23 +310,30 @@ static int32_t _lis2mdl_read(void *handle, uint8_t register_address, uint8_t *da
 static int32_t _lis2mdl_write(void *handle, uint8_t register_address, const uint8_t *data, uint16_t length){
     HAL_StatusTypeDef status;
 
+    HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_RESET);
+
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *)handle, &register_address, sizeof(register_address), HAL_MAX_DELAY);
     if (status != HAL_OK) {
+        HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_SET);
         PRINTLN_ERROR("ERROR: Failed to send register address to lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
 
     status = HAL_SPI_Transmit((SPI_HandleTypeDef *)handle, data, length, HAL_MAX_DELAY);
     if (status != HAL_OK) {
+        HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_SET);
         PRINTLN_ERROR("ERROR: Failed to write to the lis2mdl over SPI (Status: %d/%s).", status, hal_status_toString(status));
         return -1;
     }
+
+    HAL_GPIO_WritePin(MAG_NSS_PORT, MAG_NSS_PIN, GPIO_PIN_SET);
 
     return 0;
 }
 
 uint16_t init_magnetometer() {
     uint8_t status;
+    uint8_t whoami;
 
     lis2mdl_ctx = malloc(sizeof(stmdev_ctx_t));
     if (lis2mdl_ctx == NULL) {
@@ -294,12 +345,17 @@ uint16_t init_magnetometer() {
     lis2mdl_ctx->read_reg = _lis2mdl_read;
     lis2mdl_ctx->write_reg = _lis2mdl_write;
 
-    lis2mdl_device_id_get(lis2mdl_ctx, &status);
+    lis2mdl_device_id_get(lis2mdl_ctx, &whoami);
 
-    if (status != LIS2MDL_ID) {
-        PRINTLN_ERROR("Device ID is not for LIS2MDL (Status %d/%s)", status, hal_status_toString(status));
+    /*if (status != HAL_OK) {
+        PRINTLN_ERROR("Failed to read ID (Status %d/%s)", status, hal_status_toString(status));
         return U_ERROR;
     }
+
+    if (whoami != LIS2MDL_ID) {
+        PRINTLN_ERROR("Device ID is not for LIS2MDL (Status %d/%s)", status, hal_status_toString(status));
+        return U_ERROR;
+    }*/
 
     lis2mdl_reset_set(lis2mdl_ctx, 1);
     lis2mdl_operating_mode_set(lis2mdl_ctx, LIS2MDL_CONTINUOUS_MODE);
@@ -325,7 +381,7 @@ uint16_t read_magnetometer() {
 
     lis2mdl_magnetic_raw_get(lis2mdl_ctx, raw_axes);
 
-    printf("mag: %d, %d, %d", raw_axes[0], raw_axes[1], raw_axes[2]);
+    printf("mag: %d, %d, %d\n", raw_axes[0], raw_axes[1], raw_axes[2]);
 
     send_lightning_board_magnometer_sensor_information(lis2mdl_from_lsb_to_mgauss(raw_axes[0]), lis2mdl_from_lsb_to_mgauss(raw_axes[1]), lis2mdl_from_lsb_to_mgauss(raw_axes[2]));
 

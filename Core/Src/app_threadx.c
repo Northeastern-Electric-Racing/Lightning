@@ -70,7 +70,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   CATCH_ERROR(mutexes_init(), U_SUCCESS);
   // CATCH_ERROR(init_imu(), U_SUCCESS);
   CATCH_ERROR(init_lightning_sensor(), U_SUCCESS);
-  // CATCH_ERROR(init_magnetometer(), U_SUCCESS);
+  CATCH_ERROR(init_magnetometer(), U_SUCCESS);
   CATCH_ERROR(threads_init(byte_pool), U_SUCCESS);
 
   /* USER CODE END App_ThreadX_MEM_POOL */

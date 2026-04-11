@@ -68,6 +68,12 @@ void Error_Handler(void);
 #define GREEN_GPIO_Port GPIOE
 #define IMU_INT1_Pin GPIO_PIN_13
 #define IMU_INT1_GPIO_Port GPIOC
+#define SPI2_NSS_Pin GPIO_PIN_3
+#define SPI2_NSS_GPIO_Port GPIOA
+#define SPI3_NSS_Pin GPIO_PIN_4
+#define SPI3_NSS_GPIO_Port GPIOA
+#define SPI1_NSS_Pin GPIO_PIN_10
+#define SPI1_NSS_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

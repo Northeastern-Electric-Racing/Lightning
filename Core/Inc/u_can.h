@@ -20,7 +20,7 @@ extern can_t can2;
 #define LIGHTNING_SENSOR_MSG_ID   0xAAC
 #define MAGNOMETER_MSG_ID         0xAAD
 #define IMD_GENERAL_MSG_ID        0x37
-#define BMS_LIGHTNING_OKAY_MSG_ID 0x99999 // change this!
+#define BMS_LIGHTNING_OKAY_MSG_ID 0x01E
 
 
 #endif /* u_can.h */

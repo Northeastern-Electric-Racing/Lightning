@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdatomic.h>
+#include <string.h>
 #include "u_can.h"
 #include "can_messages_rx.h"
 #include "u_statemachine.h"
@@ -20,7 +21,7 @@ static _Atomic bool imd_error; // Is the IMD okay? false = imd is okay, true = i
 // As explained in the "first contact trackers" section, these bools are not used by the statemachine until at least one "okay" message has been received from each board.
 
 /* Handles the IMD status message. */
-#define _GET_BIT(data, bit) (data & 1U << bit)
+#define _GET_BIT(data, bit) (((data) & (1U << (bit))) != 0U)
 void statemachine_handleIMDMessage(can_msg_t* message) {
     /* Extract the warnings and alarms field (bytes 4 and 5 of the message). */
     uint16_t warnings_and_alarms = 0;
@@ -63,6 +64,7 @@ void statemachine_handleBMSMessage(can_msg_t* message) {
     bms_critically_faulted_t data = { 0 };
     receive_bms_critically_faulted(message, &data);
     bms_error = data.critically_faulted;
+    has_bms_made_contact = true;
 }
 
 Lightning_Board_Light_Status statemachine_getState() {

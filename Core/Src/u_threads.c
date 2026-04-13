@@ -134,7 +134,7 @@ static thread_t _gpio_lights_thread = {
 void gpio_lights_thread(ULONG thread_input) {
 
     while (1) {
-        Lightning_Board_Light_Status state = get_current_state();
+        Lightning_Board_Light_Status state = statemachine_getState();
 
         switch (state) {
             case LIGHT_GREEN:

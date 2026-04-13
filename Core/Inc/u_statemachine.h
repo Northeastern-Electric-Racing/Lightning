@@ -2,6 +2,7 @@
 #define __STATEMACHINE_H
 
 #include "u_tx_debug.h"
+#include "u_can.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -13,16 +14,13 @@ typedef enum {
 } Lightning_Board_Light_Status;
 
 /**
- * @brief sets the state of the lightning board
- * @param state the state to change to
+ * @brief Determines the appropriate Lighting board light state based on the IMD and BMS statuses.
+ * @return The Lightning Board Light Status.
  */
-uint8_t set_statemachine(Lightning_Board_Light_Status state);
+Lightning_Board_Light_Status statemachine_getState();
 
-/**
- * @brief returns the statemachine state
- * @return the state machine state
- */
-Lightning_Board_Light_Status get_current_state();
-
+void statemachine_handleIMDMessage(can_msg_t* message); // Handles the IMD status message. 
+void statemachine_handleBMSMessage(can_msg_t* message); // Handles the BMS status message.
+ 
 #endif /* u_statemachine.h */
 

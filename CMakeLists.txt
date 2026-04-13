@@ -21,8 +21,6 @@ endif()
 # Set the project name
 set(CMAKE_PROJECT_NAME Lightning)
 
-# Include toolchain file
-include("cmake/gcc-arm-none-eabi.cmake")
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -82,6 +80,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
     # gen
     "./Core/Src/can_messages_tx.c"
+    "./Core/Src/can_messages_rx.c"
 )
 
 # Add include paths

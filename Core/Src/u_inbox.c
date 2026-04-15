@@ -3,6 +3,7 @@
 #include "u_statemachine.h"
 
 void inbox_can(can_msg_t *message) {
+    printf("DATA: %d", message->data);
     switch(message->id) {
         case IMD_GENERAL_MSG_ID:
             statemachine_handleIMDMessage(message);

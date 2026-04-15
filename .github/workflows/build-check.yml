@@ -18,6 +18,6 @@ jobs:
           find . -type d -name "build" -exec rm -rf {} + ;
           mkdir -p build &&
           cd build &&
-          cmake -DCMAKE_BUILD_TYPE=Release .. &&
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake .. &&
           cmake --build .
         '

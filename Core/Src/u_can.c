@@ -23,14 +23,6 @@ uint8_t can2_init(FDCAN_HandleTypeDef *hcan) {
         return U_ERROR;
     }
 
-    /* Add filters for extended IDs */
-    // uint32_t extended_ids[] = { CERBERUS_MSG_ID, CERBERUS_MSG_ID };
-    // status = can_add_filter_extended(&can2, extended_ids);
-    // if (status != HAL_OK) {
-    //     PRINTLN_ERROR("Failed to add extended filter to can2 (Status: %d/%s, ID1: %lu, ID2: %lu).", status, hal_status_toString(status), extended_ids[0], extended_ids[1]);
-    //     return U_ERROR;
-    // }
-
     PRINTLN_INFO("Ran can2_init().");  
 
     return U_SUCCESS;

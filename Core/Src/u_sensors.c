@@ -332,7 +332,6 @@ static int32_t _lis2mdl_write(void *handle, uint8_t register_address, const uint
 }
 
 uint16_t init_magnetometer() {
-    uint8_t status;
     uint8_t whoami;
 
     lis2mdl_ctx = malloc(sizeof(stmdev_ctx_t));
@@ -345,9 +344,9 @@ uint16_t init_magnetometer() {
     lis2mdl_ctx->read_reg = _lis2mdl_read;
     lis2mdl_ctx->write_reg = _lis2mdl_write;
 
-    lis2mdl_device_id_get(lis2mdl_ctx, &whoami);
+    uint8_t status = lis2mdl_device_id_get(lis2mdl_ctx, &whoami);
 
-    /*if (status != HAL_OK) {
+    if (status != HAL_OK) {
         PRINTLN_ERROR("Failed to read ID (Status %d/%s)", status, hal_status_toString(status));
         return U_ERROR;
     }
@@ -355,7 +354,7 @@ uint16_t init_magnetometer() {
     if (whoami != LIS2MDL_ID) {
         PRINTLN_ERROR("Device ID is not for LIS2MDL (Status %d/%s)", status, hal_status_toString(status));
         return U_ERROR;
-    }*/
+    }
 
     lis2mdl_reset_set(lis2mdl_ctx, 1);
     lis2mdl_operating_mode_set(lis2mdl_ctx, LIS2MDL_CONTINUOUS_MODE);

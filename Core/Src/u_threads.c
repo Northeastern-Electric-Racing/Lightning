@@ -28,7 +28,7 @@ void default_thread(ULONG thread_input) {
     
     while(1) {
         /* Kick the watchdogs (sad) */
-        //HAL_IWDG_Refresh(&hiwdg); // Internal Watchdog
+        HAL_IWDG_Refresh(&hiwdg); // Internal Watchdog
 
         if (alt) {
 			printf(".\n");

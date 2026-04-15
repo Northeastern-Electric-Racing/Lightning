@@ -2,7 +2,7 @@ name: lighting
 
 services:
     ner-gcc-arm:
-        image: ghcr.io/northeastern-electric-racing/embedded-base:feature-venv-cmake
+        image: ghcr.io/northeastern-electric-racing/embedded-base:main
         build: .
         network_mode: host
         privileged: true

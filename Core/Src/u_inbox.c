@@ -3,6 +3,7 @@
 #include "u_statemachine.h"
 
 void inbox_can(can_msg_t *message) {
+    printf("DATA: %d", message->data);
     switch(message->id) {
         case CERBERUS_MSG_ID:
             Lightning_Board_Light_Status state = message->data[0];

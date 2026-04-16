@@ -5,6 +5,7 @@
 #include "u_can.h"
 #include "u_sensors.h"
 #include "bitstream.h"
+#include "u_lights.h"
 #include "u_statemachine.h"
 #include "u_mutexes.h"
 #include "u_test.h"
@@ -148,16 +149,13 @@ void gpio_lights_thread(ULONG thread_input) {
 
         switch (state) {
             case LIGHT_GREEN:
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                lights_setGreen();
                 break;
             case LIGHT_RED:
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                lights_setRed();
                 break;
             case LIGHT_OFF:
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                lights_setOff();
                 break;
             default:
                 PRINTLN_WARNING("State machine state is not in range %d", state);

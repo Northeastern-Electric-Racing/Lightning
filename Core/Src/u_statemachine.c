@@ -63,6 +63,7 @@ void statemachine_handleIMDMessage(can_msg_t* message) {
 void statemachine_handleBMSMessage(can_msg_t* message) {
     bms_critically_faulted_t data = { 0 };
     receive_bms_critically_faulted(message, &data);
+    PRINTLN_INFO("bms critically faulted=%d", data.critically_faulted);
     bms_error = data.critically_faulted;
     has_bms_made_contact = true;
 }

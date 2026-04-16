@@ -99,7 +99,7 @@ int _write(int file, char *ptr, int len)
 /* Callback for any FIFO0 interrupt stuff */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
-  //PRINTLN_INFO("HAL_FDCAN callback triggered");
+  PRINTLN_INFO("HAL_FDCAN callback triggered");
 
 	/* If a message has just been recieved... */
 	if (RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
@@ -344,8 +344,8 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.DataSyncJumpWidth = 1;
   hfdcan2.Init.DataTimeSeg1 = 1;
   hfdcan2.Init.DataTimeSeg2 = 1;
-  hfdcan2.Init.StdFiltersNbr = 1;
-  hfdcan2.Init.ExtFiltersNbr = 0;
+  hfdcan2.Init.StdFiltersNbr = 28;
+  hfdcan2.Init.ExtFiltersNbr = 8;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
   {
@@ -538,7 +538,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

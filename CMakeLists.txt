@@ -72,6 +72,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Core/Src/u_test.c"
     "./Core/Src/u_inbox.c"
     "./Core/Src/u_sensors.c"
+    "./Core/Src/u_lights.c"
     "./Core/Src/u_threads.c"
     "./Core/Src/u_statemachine.c"
     "./Core/Src/u_queues.c"

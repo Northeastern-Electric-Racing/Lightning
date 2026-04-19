@@ -185,6 +185,7 @@ static thread_t _pulse_thread = {
 void pulse_thread(ULONG thread_input) {
     
     while (1) {
+        PRINTLN_INFO("pulse - running pulse thread");
         static uint32_t count = 0;
         count++;
         send_lightning_pulse_message(count);

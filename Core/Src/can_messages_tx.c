@@ -141,6 +141,25 @@ uint8_t send_lightning_board_magnometer_sensor_information
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
+uint8_t send_lightning_pulse_message
+(uint32_t count)
+{
+    can_msg_t msg;
+    msg.id = 0xAAE;
+    msg.id_is_extended = true;
+            uint32_t data = 0;
+            msg.len = 4;
+                        uint32_t count_i = (uint32_t)(count);
+                        if(count_i > 4294967295ULL) {count_i = 4294967295;
+                        }
+                        data |= ((count_i) & 0xFFFFFFFFULL) << 0;
+            
+            uint32_t data_bigendian = __builtin_bswap32(data);
+            memcpy(msg.data, &data_bigendian, 4);
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
 
 
 /// @brief A helper which sends appropriate error to stdout and CAN if a bistream overflows

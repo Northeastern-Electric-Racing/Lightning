@@ -88,11 +88,15 @@ void receive_front_shockpot(const can_msg_t *message, front_shockpot_t *front_sh
 
     
     
+    
     front_shockpot->shock1 = (float)bitstream_data.shock1;
     
     
     
+    
+    
     front_shockpot->shock1_raw = (uint16_t)bitstream_data.shock1_raw;
+    
     
     
 }
@@ -233,11 +237,15 @@ void receive_back_shockpot(const can_msg_t *message, back_shockpot_t *back_shock
 
     
     
+    
     back_shockpot->shock1 = (float)bitstream_data.shock1;
     
     
     
+    
+    
     back_shockpot->shock1_raw = (uint16_t)bitstream_data.shock1_raw;
+    
     
     
 }
@@ -686,9 +694,6 @@ void receive_shutdown_pins(const can_msg_t *message, shutdown_pins_t *shutdown_p
     uint64_t tsms_gpio_mask = (1ULL << 1) - 1ULL;
     uint64_t tsms_gpio_raw = (data >> 6) & tsms_gpio_mask;
     shutdown_pins->tsms_gpio = (bool)tsms_gpio_raw;
-    uint64_t UNUSED_mask = (1ULL << 6) - 1ULL;
-    uint64_t UNUSED_raw = (data >> 0) & UNUSED_mask;
-    shutdown_pins->UNUSED = (uint8_t)UNUSED_raw;
 }
 
 void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
@@ -733,15 +738,27 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values) {
     
-    uint32_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 4);
-    uint32_t data = __builtin_bswap32(data_bigendian);
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
     uint64_t accel_norm_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_norm_raw = (data >> 16) & accel_norm_mask;
+    uint64_t accel_norm_raw = (data >> 48) & accel_norm_mask;
     pedal_percent_pressed_values->accel_norm = (float)(accel_norm_raw / 100);
     uint64_t brake_norm_mask = (1ULL << 16) - 1ULL;
-    uint64_t brake_norm_raw = (data >> 0) & brake_norm_mask;
+    uint64_t brake_norm_raw = (data >> 32) & brake_norm_mask;
     pedal_percent_pressed_values->brake_norm = (float)(brake_norm_raw / 100);
+    uint64_t brake_psi_brake1_mask = (1ULL << 16) - 1ULL;
+    uint64_t brake_psi_brake1_bits = (data >> 16) & brake_psi_brake1_mask;
+    int64_t brake_psi_brake1_raw = (brake_psi_brake1_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(brake_psi_brake1_bits | ~brake_psi_brake1_mask)
+        : (int64_t)brake_psi_brake1_bits;
+    pedal_percent_pressed_values->brake_psi_brake1 = (float)(brake_psi_brake1_raw / 10);
+    uint64_t brake_psi_brake2_mask = (1ULL << 16) - 1ULL;
+    uint64_t brake_psi_brake2_bits = (data >> 0) & brake_psi_brake2_mask;
+    int64_t brake_psi_brake2_raw = (brake_psi_brake2_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(brake_psi_brake2_bits | ~brake_psi_brake2_mask)
+        : (int64_t)brake_psi_brake2_bits;
+    pedal_percent_pressed_values->brake_psi_brake2 = (float)(brake_psi_brake2_raw / 10);
 }
 
 void receive_pedal_sensor_voltages(const can_msg_t *message, pedal_sensor_voltages_t *pedal_sensor_voltages) {
@@ -822,19 +839,19 @@ void receive_imu_gyro(const can_msg_t *message, imu_gyro_t *imu_gyro) {
     int64_t imu_gyro_x_raw = (imu_gyro_x_bits & (1ULL << (16 - 1)))
         ? (int64_t)(imu_gyro_x_bits | ~imu_gyro_x_mask)
         : (int64_t)imu_gyro_x_bits;
-    imu_gyro->imu_gyro_x = (float)(imu_gyro_x_raw / 100);
+    imu_gyro->imu_gyro_x = (float)(imu_gyro_x_raw / 4);
     uint64_t imu_gyro_y_mask = (1ULL << 16) - 1ULL;
     uint64_t imu_gyro_y_bits = (data >> 32) & imu_gyro_y_mask;
     int64_t imu_gyro_y_raw = (imu_gyro_y_bits & (1ULL << (16 - 1)))
         ? (int64_t)(imu_gyro_y_bits | ~imu_gyro_y_mask)
         : (int64_t)imu_gyro_y_bits;
-    imu_gyro->imu_gyro_y = (float)(imu_gyro_y_raw / 100);
+    imu_gyro->imu_gyro_y = (float)(imu_gyro_y_raw / 4);
     uint64_t imu_gyro_z_mask = (1ULL << 16) - 1ULL;
     uint64_t imu_gyro_z_bits = (data >> 16) & imu_gyro_z_mask;
     int64_t imu_gyro_z_raw = (imu_gyro_z_bits & (1ULL << (16 - 1)))
         ? (int64_t)(imu_gyro_z_bits | ~imu_gyro_z_mask)
         : (int64_t)imu_gyro_z_bits;
-    imu_gyro->imu_gyro_z = (float)(imu_gyro_z_raw / 100);
+    imu_gyro->imu_gyro_z = (float)(imu_gyro_z_raw / 4);
 }
 
 void receive_faults(const can_msg_t *message, faults_t *faults) {
@@ -1075,6 +1092,29 @@ void receive_bms_shutdown_status_as_reported_by_vcu(const can_msg_t *message, bm
     bms_shutdown_status_as_reported_by_vcu->bms_shutdown_as_reported_by_vcu = (bool)bms_shutdown_as_reported_by_vcu_raw;
 }
 
+void receive_drive_lock_states(const can_msg_t *message, drive_lock_states_t *drive_lock_states) {
+    
+    uint8_t data = message->data[0];
+    uint64_t BRAKE_OC_mask = (1ULL << 1) - 1ULL;
+    uint64_t BRAKE_OC_raw = (data >> 7) & BRAKE_OC_mask;
+    drive_lock_states->BRAKE_OC = (bool)BRAKE_OC_raw;
+    uint64_t BRAKE_SC_mask = (1ULL << 1) - 1ULL;
+    uint64_t BRAKE_SC_raw = (data >> 6) & BRAKE_SC_mask;
+    drive_lock_states->BRAKE_SC = (bool)BRAKE_SC_raw;
+    uint64_t ACCEL_OC_mask = (1ULL << 1) - 1ULL;
+    uint64_t ACCEL_OC_raw = (data >> 5) & ACCEL_OC_mask;
+    drive_lock_states->ACCEL_OC = (bool)ACCEL_OC_raw;
+    uint64_t ACCEL_SC_mask = (1ULL << 1) - 1ULL;
+    uint64_t ACCEL_SC_raw = (data >> 4) & ACCEL_SC_mask;
+    drive_lock_states->ACCEL_SC = (bool)ACCEL_SC_raw;
+    uint64_t ACCEL_DIFF_mask = (1ULL << 1) - 1ULL;
+    uint64_t ACCEL_DIFF_raw = (data >> 3) & ACCEL_DIFF_mask;
+    drive_lock_states->ACCEL_DIFF = (bool)ACCEL_DIFF_raw;
+    uint64_t BSPD_PREF_mask = (1ULL << 1) - 1ULL;
+    uint64_t BSPD_PREF_raw = (data >> 2) & BSPD_PREF_mask;
+    drive_lock_states->BSPD_PREF = (bool)BSPD_PREF_raw;
+}
+
 void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent) {
     
     uint8_t data = message->data[0];
@@ -1206,7 +1246,10 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
 
     
     
+    
     imd_general_information->R_iso_corrected = (uint16_t)bitstream_data.R_iso_corrected;
+    
+    
     
     
     
@@ -1214,7 +1257,11 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
     
     
     
+    
+    
     imd_general_information->Iso_measurement_counter = (uint8_t)bitstream_data.Iso_measurement_counter;
+    
+    
     
     
     
@@ -1222,7 +1269,11 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
     
     
     
+    
+    
     imd_general_information->HV_pos_conn_fail = (bool)bitstream_data.HV_pos_conn_fail;
+    
+    
     
     
     
@@ -1230,7 +1281,11 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
     
     
     
+    
+    
     imd_general_information->Earth_conn_fail = (bool)bitstream_data.Earth_conn_fail;
+    
+    
     
     
     
@@ -1238,7 +1293,11 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
     
     
     
+    
+    
     imd_general_information->iso_warning = (bool)bitstream_data.iso_warning;
+    
+    
     
     
     
@@ -1246,7 +1305,11 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
     
     
     
+    
+    
     imd_general_information->Unbalance_alarm = (bool)bitstream_data.Unbalance_alarm;
+    
+    
     
     
     
@@ -1254,23 +1317,14 @@ void receive_imd_general_information(const can_msg_t *message, imd_general_infor
     
     
     
+    
+    
     imd_general_information->Unsafe_to_start = (bool)bitstream_data.Unsafe_to_start;
     
     
     
-    imd_general_information->Earthlift_Open = (bool)bitstream_data.Earthlift_Open;
     
     
-    
-    imd_general_information->warnings_and_alarms_unused_bits = (uint8_t)bitstream_data.warnings_and_alarms_unused_bits;
-    
-    
-    
-    imd_general_information->Device_Activity = (uint8_t)bitstream_data.Device_Activity;
-    
-    
-    
-    imd_general_information->Not_Applicable = (uint8_t)bitstream_data.Not_Applicable;
     
     
 }

@@ -35,4 +35,11 @@ uint8_t send_lightning_board_lightning_sensor_information
 */
 uint8_t send_lightning_board_magnometer_sensor_information
 (float mag_x,float mag_y,float mag_z);
+
+/**
+* Contents of this message:
+* Lightning/Pulse/Count - Number of times the lightning pulse has been sent.
+*/
+uint8_t send_lightning_pulse_message
+(uint32_t count);
 #endif

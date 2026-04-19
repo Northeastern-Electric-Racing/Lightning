@@ -7,6 +7,7 @@
 #include "bitstream.h"
 #include "u_lights.h"
 #include "u_statemachine.h"
+#include "can_messages_tx.h"
 #include "u_mutexes.h"
 #include "u_test.h"
 
@@ -167,6 +168,28 @@ void gpio_lights_thread(ULONG thread_input) {
         #if TEST_MODE
         gpio_test();
         #endif
+    }
+}
+
+/* Lightning Pulse Thread */
+static thread_t _pulse_thread = {
+    .name       = "Lightning Pulse Thread",  /* Name */
+    .size       = 4096,                      /* Stack Size (in bytes) */
+    .priority   = 0,                         /* Priority */
+    .threshold  = 0,                         /* Preemption Threshold */
+    .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
+    .auto_start = TX_AUTO_START,             /* Auto Start */
+    .sleep      = 500,                       /* Sleep (in ticks) */
+    .function   = pulse_thread               /* Thread Function */
+};
+void pulse_thread(ULONG thread_input) {
+    
+    while (1) {
+        static uint32_t count = 0;
+        count++;
+        send_lightning_pulse_message(count);
+
+        tx_thread_sleep(_pulse_thread.sleep);
     }
 }
 

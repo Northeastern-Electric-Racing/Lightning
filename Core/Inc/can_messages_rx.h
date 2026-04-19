@@ -302,7 +302,6 @@ typedef struct {
  bool ckpt_gpio;
  bool inertia_sw_gpio;
  bool tsms_gpio;
- uint8_t UNUSED;
 } shutdown_pins_t;
 
 void receive_shutdown_pins(const can_msg_t *message, shutdown_pins_t *shutdown_pins);
@@ -325,6 +324,8 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state);
 typedef struct {
  float accel_norm;
  float brake_norm;
+ float brake_psi_brake1;
+ float brake_psi_brake2;
 } pedal_percent_pressed_values_t;
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values);
@@ -478,6 +479,17 @@ typedef struct {
 void receive_bms_shutdown_status_as_reported_by_vcu(const can_msg_t *message, bms_shutdown_status_as_reported_by_vcu_t *bms_shutdown_status_as_reported_by_vcu);
 
 typedef struct {
+ bool BRAKE_OC;
+ bool BRAKE_SC;
+ bool ACCEL_OC;
+ bool ACCEL_SC;
+ bool ACCEL_DIFF;
+ bool BSPD_PREF;
+} drive_lock_states_t;
+
+void receive_drive_lock_states(const can_msg_t *message, drive_lock_states_t *drive_lock_states);
+
+typedef struct {
  uint8_t pwm_duty;
 } shepherd_bms_fan_percent_t;
 
@@ -569,10 +581,6 @@ typedef struct {
  bool Unbalance_alarm;
  bool Undervoltage_alarm;
  bool Unsafe_to_start;
- bool Earthlift_Open;
- uint8_t warnings_and_alarms_unused_bits;
- uint8_t Device_Activity;
- uint8_t Not_Applicable;
 } imd_general_information_t;
 
 void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information);

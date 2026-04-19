@@ -16,5 +16,6 @@ void can_incoming_thread(ULONG thread_input);
 void can_outgoing_thread(ULONG thread_input);
 void sensors_thread(ULONG thread_input);
 void gpio_lights_thread(ULONG thread_input);
+void pulse_thread(ULONG thread_input);
 
 #endif /* u_threads.h */

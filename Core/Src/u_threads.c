@@ -204,6 +204,7 @@ uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
     CATCH_ERROR(create_thread(byte_pool, &_can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
     CATCH_ERROR(create_thread(byte_pool, &_sensors_thread), U_SUCCESS);           // Create Sensor thread.
     CATCH_ERROR(create_thread(byte_pool, &_gpio_lights_thread), U_SUCCESS);       // Create GPIO Lights thread.
+    CATCH_ERROR(create_thread(byte_pool, &_pulse_thread), U_SUCCESS);             // Create Pulse Thread
 
     PRINTLN_INFO("Ran threads_init().");
     return U_SUCCESS;

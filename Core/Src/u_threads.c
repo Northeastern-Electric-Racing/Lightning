@@ -91,8 +91,8 @@ void can_outgoing_thread(ULONG thread_input) {
         /* Process outgoing messages */
         while(queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
             status = can_send_msg(&can2, &message);
-            if(status != U_SUCCESS) {
-                PRINTLN_WARNING("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
+            if(status != HAL_OK) {
+                PRINTLN_WARNING("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld, Status: %d/%s).", message.id, status, hal_status_toString(status));
             }
         }
 

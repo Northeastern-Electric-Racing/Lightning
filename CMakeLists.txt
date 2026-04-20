@@ -11,7 +11,6 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
-set(CMAKE_C_COMPILER "/opt/homebrew/bin/arm-none-eabi-gcc")
 
 
 # Define the build type
@@ -73,6 +72,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Core/Src/u_test.c"
     "./Core/Src/u_inbox.c"
     "./Core/Src/u_sensors.c"
+    "./Core/Src/u_lights.c"
     "./Core/Src/u_threads.c"
     "./Core/Src/u_statemachine.c"
     "./Core/Src/u_queues.c"
@@ -81,6 +81,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
     # gen
     "./Core/Src/can_messages_tx.c"
+    "./Core/Src/can_messages_rx.c"
 )
 
 # Add include paths

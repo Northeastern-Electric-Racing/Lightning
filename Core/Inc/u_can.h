@@ -14,11 +14,13 @@ uint8_t can2_init(FDCAN_HandleTypeDef *hcan);
 extern can_t can2;
 
 /* List of CAN IDs */
-#define CERBERUS_MSG_ID          0x0CA
-#define IMU_ACCEL_MSG_ID         0xAAA
-#define IMU_GYRO_MSG_ID          0xAAB
-#define LIGHTNING_SENSOR_MSG_ID  0xAAC
-#define MAGNOMETER_MSG_ID        0xAAD
+#define CERBERUS_MSG_ID           0x0CA
+#define IMU_ACCEL_MSG_ID          0xAAA
+#define IMU_GYRO_MSG_ID           0xAAB
+#define LIGHTNING_SENSOR_MSG_ID   0xAAC
+#define MAGNOMETER_MSG_ID         0xAAD
+#define IMD_GENERAL_MSG_ID        0x37
+#define BMS_LIGHTNING_OKAY_MSG_ID 0x01E
 
 
 #endif /* u_can.h */

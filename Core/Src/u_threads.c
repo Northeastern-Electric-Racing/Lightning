@@ -5,7 +5,9 @@
 #include "u_can.h"
 #include "u_sensors.h"
 #include "bitstream.h"
+#include "u_lights.h"
 #include "u_statemachine.h"
+#include "can_messages_tx.h"
 #include "u_mutexes.h"
 #include "u_test.h"
 
@@ -90,8 +92,8 @@ void can_outgoing_thread(ULONG thread_input) {
         /* Process outgoing messages */
         while(queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
             status = can_send_msg(&can2, &message);
-            if(status != U_SUCCESS) {
-                PRINTLN_WARNING("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld).", message.id);
+            if(status != HAL_OK) {
+                PRINTLN_WARNING("WARNING: Failed to send message (on can2) after removing from outgoing queue (Message ID: %ld, Status: %d/%s).", message.id, status, hal_status_toString(status));
             }
         }
 
@@ -144,20 +146,17 @@ static thread_t _gpio_lights_thread = {
 void gpio_lights_thread(ULONG thread_input) {
 
     while (1) {
-        Lightning_Board_Light_Status state = get_current_state();
+        Lightning_Board_Light_Status state = statemachine_getState();
 
         switch (state) {
             case LIGHT_GREEN:
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+                lights_setGreen();
                 break;
             case LIGHT_RED:
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+                lights_setRed();
                 break;
             case LIGHT_OFF:
-                HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+                lights_setOff();
                 break;
             default:
                 PRINTLN_WARNING("State machine state is not in range %d", state);
@@ -172,6 +171,29 @@ void gpio_lights_thread(ULONG thread_input) {
     }
 }
 
+/* Lightning Pulse Thread */
+static thread_t _pulse_thread = {
+    .name       = "Lightning Pulse Thread",  /* Name */
+    .size       = 4096,                      /* Stack Size (in bytes) */
+    .priority   = 0,                         /* Priority */
+    .threshold  = 0,                         /* Preemption Threshold */
+    .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
+    .auto_start = TX_AUTO_START,             /* Auto Start */
+    .sleep      = 500,                       /* Sleep (in ticks) */
+    .function   = pulse_thread               /* Thread Function */
+};
+void pulse_thread(ULONG thread_input) {
+    
+    while (1) {
+        PRINTLN_INFO("pulse - running pulse thread");
+        static uint32_t count = 0;
+        count++;
+        send_lightning_pulse_message(count);
+
+        tx_thread_sleep(_pulse_thread.sleep);
+    }
+}
+
 /* Initializes all ThreadX threads. 
  * Calls to _create_thread() should go in here
  */
@@ -183,6 +205,7 @@ uint8_t threads_init(TX_BYTE_POOL *byte_pool) {
     CATCH_ERROR(create_thread(byte_pool, &_can_outgoing_thread), U_SUCCESS);      // Create CAN Outgoing thread.
     CATCH_ERROR(create_thread(byte_pool, &_sensors_thread), U_SUCCESS);           // Create Sensor thread.
     CATCH_ERROR(create_thread(byte_pool, &_gpio_lights_thread), U_SUCCESS);       // Create GPIO Lights thread.
+    CATCH_ERROR(create_thread(byte_pool, &_pulse_thread), U_SUCCESS);             // Create Pulse Thread
 
     PRINTLN_INFO("Ran threads_init().");
     return U_SUCCESS;

@@ -21,10 +21,9 @@ uint8_t send_lightning_board_imu_acceleration_data
 {
     can_msg_t msg;
     msg.id = 0xAAA;
-    msg.id_is_extended = true;msg.len = 6;
-
-    
+    msg.id_is_extended = true;
             uint64_t data = 0;
+            msg.len = 8;
                         int32_t accel_x_i = (int32_t)(accel_x*1000);
                         if(accel_x_i > 32767) {accel_x_i = 32767;
                         } else if(accel_x_i < -32768) {accel_x_i = -32768;
@@ -45,7 +44,6 @@ uint8_t send_lightning_board_imu_acceleration_data
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
-        
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
@@ -55,10 +53,9 @@ uint8_t send_lightning_board_imu_gyro_data
 {
     can_msg_t msg;
     msg.id = 0xAAB;
-    msg.id_is_extended = true;msg.len = 6;
-
-    
+    msg.id_is_extended = true;
             uint64_t data = 0;
+            msg.len = 8;
                         int32_t gyro_x_i = (int32_t)(gyro_x*1000);
                         if(gyro_x_i > 32767) {gyro_x_i = 32767;
                         } else if(gyro_x_i < -32768) {gyro_x_i = -32768;
@@ -79,7 +76,6 @@ uint8_t send_lightning_board_imu_gyro_data
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
-        
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
@@ -89,10 +85,9 @@ uint8_t send_lightning_board_lightning_sensor_information
 {
     can_msg_t msg;
     msg.id = 0xAAC;
-    msg.id_is_extended = true;msg.len = 6;
-
-    
+    msg.id_is_extended = true;
             uint64_t data = 0;
+            msg.len = 8;
                         uint32_t interrupt_i = (uint32_t)(interrupt);
                         if(interrupt_i > 255ULL) {interrupt_i = 255;
                         }
@@ -110,7 +105,6 @@ uint8_t send_lightning_board_lightning_sensor_information
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
-        
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
@@ -120,10 +114,9 @@ uint8_t send_lightning_board_magnometer_sensor_information
 {
     can_msg_t msg;
     msg.id = 0xAAD;
-    msg.id_is_extended = true;msg.len = 6;
-
-    
+    msg.id_is_extended = true;
             uint64_t data = 0;
+            msg.len = 8;
                         int32_t mag_x_i = (int32_t)(mag_x*1000);
                         if(mag_x_i > 32767) {mag_x_i = 32767;
                         } else if(mag_x_i < -32768) {mag_x_i = -32768;
@@ -144,7 +137,25 @@ uint8_t send_lightning_board_magnometer_sensor_information
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
-        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_lightning_pulse_message
+(uint32_t count)
+{
+    can_msg_t msg;
+    msg.id = 0xAAE;
+    msg.id_is_extended = true;
+            uint32_t data = 0;
+            msg.len = 4;
+                        uint32_t count_i = (uint32_t)(count);
+                        if(count_i > 4294967295ULL) {count_i = 4294967295;
+                        }
+                        data |= ((count_i) & 0xFFFFFFFFULL) << 0;
+            
+            uint32_t data_bigendian = __builtin_bswap32(data);
+            memcpy(msg.data, &data_bigendian, 4);
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }

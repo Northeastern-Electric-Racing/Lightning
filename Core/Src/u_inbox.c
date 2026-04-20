@@ -3,14 +3,17 @@
 #include "u_statemachine.h"
 
 void inbox_can(can_msg_t *message) {
-    printf("DATA: %d", message->data);
+    PRINTLN_INFO("can - incoming can message");
     switch(message->id) {
-        case CERBERUS_MSG_ID:
-            Lightning_Board_Light_Status state = message->data[0];
-            set_statemachine(state);
+        case IMD_GENERAL_MSG_ID:
+            statemachine_handleIMDMessage(message);
+            break;
+        case BMS_LIGHTNING_OKAY_MSG_ID:
+            PRINTLN_INFO("can - receieved the bms lightning message");
+            statemachine_handleBMSMessage(message);
             break;
         default:
-            PRINTLN_WARNING("Unknown Inbox Message. ID: %lu", message->id);
+            PRINTLN_WARNING("Unknown Inbox Message. ID: 0x%X", message->id);
             break;
     }
 }

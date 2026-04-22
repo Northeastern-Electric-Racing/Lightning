@@ -16,7 +16,7 @@ static timer_t lightning_timeout = {
     .callback = _lightning_timeout_callback,
     .duration = LIGHTNING_TIMEOUT_DURATION,
     .type = ONESHOT,
-    .auto_activate = true
+    .auto_activate = false
 };
 // This timer implements Lightning's post-boot grace period.
 // For the first few seconds after starting up, we don't want to set an official light state, as IMD and BMS are still getting started.
@@ -36,6 +36,25 @@ static _Atomic bool bms_error; // Is the BMS okay? false = bms is okay, true = b
 static _Atomic bool imd_error; // Is the IMD okay? false = imd is okay, true = imd is NOT okay.
 // These values are updated via CAN messages that are sent from the BMS and IMD.
 // As explained in the "first contact trackers" section, these bools are not used by the statemachine until at least one "okay" message has been received from each board.
+
+/* Initialize the lightning timeout timer. */
+int statemachine_init(void) {
+    /* Initialize the lightning timeout timer. */
+    int status = timer_init(&lightning_timeout);
+    if(status != U_SUCCESS) {
+        PRINTLN_ERROR("Failed to call timer_init() (Timer: %s, Status: %d).", lightning_timeout.name, status);
+        return U_ERROR;
+    }
+
+    /* Start the lightning timeout timer. */
+    status = timer_start(&lightning_timeout);
+    if(status != U_SUCCESS) {
+        PRINTLN_ERROR("Failed to call timer_start() (Timer: %s, Status: %d).", lightning_timeout.name, status);
+        return U_ERROR;
+    }
+
+    return U_SUCCESS;
+}
 
 /* Handles the IMD status message. */
 #define _GET_BIT(data, bit) (((data) & (1U << (bit))) != 0U)

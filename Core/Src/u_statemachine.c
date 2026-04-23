@@ -8,7 +8,7 @@
 #include "u_mutexes.h"
 
 /* Lightning Timeout */
-#define LIGHTNING_TIMEOUT_DURATION 5 // Duration of lightning's post-boot grace period, in ticks.
+#define LIGHTNING_TIMEOUT_DURATION 5000 // Duration of lightning's post-boot grace period, in ticks.
 static _Atomic bool grace_period = true; // If `true`, lightning is still within its post-boot grace period and will force LIGHT_OFF no matter what.
 static void _lightning_timeout_callback(ULONG args) { grace_period = false; } // Callback to be called after the timer expires.
 static timer_t lightning_timeout = {
@@ -105,6 +105,7 @@ void statemachine_handleBMSMessage(can_msg_t* message) {
 }
 
 Lightning_Board_Light_Status statemachine_getState() {
+    PRINTLN_INFO("grace_period = %d", grace_period);
     /* If we haven't made first contact yet from either board, or we are still in our grace period, just return LIGHT_OFF. */
     if(!has_bms_made_contact || !has_imd_made_contact || grace_period) {
         return LIGHT_OFF;

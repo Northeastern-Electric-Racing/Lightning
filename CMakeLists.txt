@@ -59,6 +59,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "./Drivers/Embedded-Base/threadX/src/u_tx_mutex.c"
     "./Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
     "./Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
+    "./Drivers/Embedded-Base/threadX/src/u_tx_timers.c"
     "./Drivers/Embedded-Base/middleware/src/bitstream.c"
     "./Drivers/Embedded-Base/middleware/src/c_utils.c"
 

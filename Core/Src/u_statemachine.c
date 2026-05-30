@@ -34,7 +34,7 @@ static _Atomic bool has_imd_made_contact = false;
 /* "Okay" Statuses. */
 static _Atomic bool bms_error; // Is the BMS okay? false = bms is okay, true = bms is NOT okay.
 static _Atomic bool imd_error; // Is the IMD okay? false = imd is okay, true = imd is NOT okay.
-static _Atomic bool fault_latched; // Is a latched fault active? false = faults are still latchde, true = no latching fault / they were reset
+static _Atomic bool fault_latched = false; // Is a latched fault active? false = faults are still latchde, true = no latching fault / they were reset
 // These values are updated via CAN messages that are sent from the BMS and IMD.
 // As explained in the "first contact trackers" section, these bools are not used by the statemachine until at least one "okay" message has been received from each board.
 

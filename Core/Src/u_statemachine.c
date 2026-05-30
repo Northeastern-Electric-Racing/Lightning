@@ -34,6 +34,7 @@ static _Atomic bool has_imd_made_contact = false;
 /* "Okay" Statuses. */
 static _Atomic bool bms_error; // Is the BMS okay? false = bms is okay, true = bms is NOT okay.
 static _Atomic bool imd_error; // Is the IMD okay? false = imd is okay, true = imd is NOT okay.
+static _Atomic bool fault_latched; // Is a latched fault active? false = faults are still latchde, true = no latching fault / they were reset
 // These values are updated via CAN messages that are sent from the BMS and IMD.
 // As explained in the "first contact trackers" section, these bools are not used by the statemachine until at least one "okay" message has been received from each board.
 
@@ -93,6 +94,16 @@ void statemachine_handleIMDMessage(can_msg_t* message) {
 
     /* Update `has_imd_made_contact`, since we have made contact if this has been called. */
     has_imd_made_contact = true;
+    fault_latched = true;
+}
+
+void statemachine_handleResetLatchMessage(can_msg_t *message) {
+    reset_latching_fault_t data = { 0 };
+    receive_reset_latching_fault(message, &data);
+    PRINTLN_INFO("Latching Fault Reset=%d", data.reset_latching);
+    if (data.reset_latching) {
+        fault_latched = false;
+    }
 }
 
 /* Handles the BMS status message. */
@@ -102,6 +113,7 @@ void statemachine_handleBMSMessage(can_msg_t* message) {
     PRINTLN_INFO("bms critically faulted=%d", data.critically_faulted);
     bms_error = data.critically_faulted;
     has_bms_made_contact = true;
+    fault_latched = true;
 }
 
 Lightning_Board_Light_Status statemachine_getState() {
@@ -112,7 +124,7 @@ Lightning_Board_Light_Status statemachine_getState() {
     }
     
     /* If either the BMS or IMD has an error, return LIGHT_RED. */
-    if(bms_error || imd_error) {
+    if(fault_latched || bms_error || imd_error) {
         return LIGHT_RED;
     }
 

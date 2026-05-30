@@ -15,6 +15,12 @@
 #include "bitstream.h"
 
 typedef struct {
+ uint8_t button_id;
+} wheel_buttons_t;
+
+void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons);
+
+typedef struct {
  float temp;
  float humidity;
 } front_msb_env_t;
@@ -129,46 +135,82 @@ typedef struct {
 void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation);
 
 typedef struct {
- float current_target_ac;
-} ac_current_command_t;
+ uint8_t pwm_duty;
+} shepherd_bms_fan_percent_t;
 
-void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command);
-
-typedef struct {
- float brake_ac_current;
-} brake_current_command_t;
-
-void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command);
+void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent);
 
 typedef struct {
- float max_current_ac_target;
-} max_ac_current_command_t;
+ uint8_t state;
+} dashboard_efuse_state_t;
 
-void receive_max_ac_current_command(const can_msg_t *message, max_ac_current_command_t *max_ac_current_command);
-
-typedef struct {
- float max_ac_brake_current_target;
-} max_ac_brake_current_command_t;
-
-void receive_max_ac_brake_current_command(const can_msg_t *message, max_ac_brake_current_command_t *max_ac_brake_current_command);
+void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state);
 
 typedef struct {
- float max_dc_current_target;
-} max_dc_current_command_t;
+ uint8_t state;
+} brake_efuse_state_t;
 
-void receive_max_dc_current_command(const can_msg_t *message, max_dc_current_command_t *max_dc_current_command);
-
-typedef struct {
- float max_dc_brake_current_target;
-} max_dc_brake_current_command_t;
-
-void receive_max_dc_brake_current_command(const can_msg_t *message, max_dc_brake_current_command_t *max_dc_brake_current_command);
+void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state);
 
 typedef struct {
- uint8_t drive_enable;
-} drive_enable_command_t;
+ uint8_t state;
+} shutdown_efuse_state_t;
 
-void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
+void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} lv_efuse_state_t;
+
+void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} radfan_efuse_state_t;
+
+void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} fanbatt_efuse_state_t;
+
+void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} pumpone_efuse_state_t;
+
+void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} pumptwo_efuse_state_t;
+
+void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} battbox_efuse_state_t;
+
+void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} mc_efuse_state_t;
+
+void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} spare_efuse_state_t;
+
+void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state);
+
+typedef struct {
+ uint8_t command;
+} rtds_command_message_t;
+
+void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
 
 typedef struct {
  uint16_t ADC;
@@ -294,7 +336,6 @@ void receive_spare_efuse(const can_msg_t *message, spare_efuse_t *spare_efuse);
 typedef struct {
  bool bms_gpio;
  bool bots_gpio;
- bool spare_gpio;
  bool bspd_gpio;
  bool hv_c;
  bool hvd_gpio;
@@ -373,7 +414,6 @@ typedef struct {
  bool CAN_INCOMING_FAULT;
  bool BMS_CAN_MONITOR_FAULT;
  bool LIGHTNING_CAN_MONITOR_FAULT;
- bool SHUTDOWN_FAULT;
  bool ONBOARD_TEMP_FAULT;
  bool IMU_ACCEL_FAULT;
  bool IMU_GYRO_FAULT;
@@ -385,6 +425,8 @@ typedef struct {
  bool ONBOARD_PEDAL_DIFFERENCE_FAULT;
  bool RTDS_FAULT;
  bool LV_LOW_VOLTAGE_FAULT;
+ bool PRECHARGE_FLOATING_FAULT;
+ bool LATCHING_ACTIVE_FAULT;
 } faults_t;
 
 void receive_faults(const can_msg_t *message, faults_t *faults);
@@ -485,87 +527,16 @@ typedef struct {
  bool ACCEL_SC;
  bool ACCEL_DIFF;
  bool BSPD_PREF;
+ bool BMS_NOT_PRECHARGED_YET;
 } drive_lock_states_t;
 
 void receive_drive_lock_states(const can_msg_t *message, drive_lock_states_t *drive_lock_states);
 
 typedef struct {
- uint8_t pwm_duty;
-} shepherd_bms_fan_percent_t;
+ bool reset_latching;
+} reset_latching_fault_t;
 
-void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent);
-
-typedef struct {
- uint8_t state;
-} dashboard_efuse_state_t;
-
-void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state);
-
-typedef struct {
- uint8_t state;
-} brake_efuse_state_t;
-
-void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state);
-
-typedef struct {
- uint8_t state;
-} shutdown_efuse_state_t;
-
-void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state);
-
-typedef struct {
- uint8_t state;
-} lv_efuse_state_t;
-
-void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state);
-
-typedef struct {
- uint8_t state;
-} radfan_efuse_state_t;
-
-void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state);
-
-typedef struct {
- uint8_t state;
-} fanbatt_efuse_state_t;
-
-void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state);
-
-typedef struct {
- uint8_t state;
-} pumpone_efuse_state_t;
-
-void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state);
-
-typedef struct {
- uint8_t state;
-} pumptwo_efuse_state_t;
-
-void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state);
-
-typedef struct {
- uint8_t state;
-} battbox_efuse_state_t;
-
-void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state);
-
-typedef struct {
- uint8_t state;
-} mc_efuse_state_t;
-
-void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state);
-
-typedef struct {
- uint8_t state;
-} spare_efuse_state_t;
-
-void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state);
-
-typedef struct {
- uint8_t command;
-} rtds_command_message_t;
-
-void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
+void receive_reset_latching_fault(const can_msg_t *message, reset_latching_fault_t *reset_latching_fault);
 
 typedef struct {
  uint16_t R_iso_corrected;
@@ -584,12 +555,6 @@ typedef struct {
 } imd_general_information_t;
 
 void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information);
-
-typedef struct {
- uint8_t button_id;
-} wheel_buttons_t;
-
-void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons);
 
 typedef struct {
  float charge_volts;
@@ -844,7 +809,7 @@ typedef struct {
 void receive_onboard_therm_temperatures(const can_msg_t *message, onboard_therm_temperatures_t *onboard_therm_temperatures);
 
 typedef struct {
- bool precharge_status;
+ uint8_t precharge_status;
 } precharge_status_t;
 
 void receive_precharge_status(const can_msg_t *message, precharge_status_t *precharge_status);
@@ -852,11 +817,9 @@ void receive_precharge_status(const can_msg_t *message, precharge_status_t *prec
 typedef struct {
  float batt_voltage;
  float ts_voltage;
- float shunt_temp;
- float pack_current;
-} hv_plate_data_t;
+} hv_plate_voltages_t;
 
-void receive_hv_plate_data(const can_msg_t *message, hv_plate_data_t *hv_plate_data);
+void receive_hv_plate_voltages(const can_msg_t *message, hv_plate_voltages_t *hv_plate_voltages);
 
 typedef struct {
  uint8_t chip_id;
@@ -921,7 +884,11 @@ typedef struct {
 void receive_pack_soc_status(const can_msg_t *message, pack_soc_status_t *pack_soc_status);
 
 typedef struct {
- bool shutdown;
+ bool shutdown_state;
+ bool shutdown_ts_minus_sense;
+ bool shutdown_ts_plus_sense;
+ bool shutdown_acc_sense;
+ bool shutdown_tsip_sense;
 } shutdown_as_read_by_bms_t;
 
 void receive_shutdown_as_read_by_bms(const can_msg_t *message, shutdown_as_read_by_bms_t *shutdown_as_read_by_bms);
@@ -939,6 +906,69 @@ typedef struct {
 } bms_critically_faulted_t;
 
 void receive_bms_critically_faulted(const can_msg_t *message, bms_critically_faulted_t *bms_critically_faulted);
+
+typedef struct {
+ float pack_current;
+ float shunt_temp;
+} pack_current_and_shunt_temp_t;
+
+void receive_pack_current_and_shunt_temp(const can_msg_t *message, pack_current_and_shunt_temp_t *pack_current_and_shunt_temp);
+
+typedef struct {
+ float batt_volts;
+ float ts_volts;
+} hv_plate_voltages_adbms_t;
+
+void receive_hv_plate_voltages_adbms(const can_msg_t *message, hv_plate_voltages_adbms_t *hv_plate_voltages_adbms);
+
+typedef struct {
+ float pack_current;
+ float shunt_temp;
+} pack_current_and_shunt_temp_adbms_t;
+
+void receive_pack_current_and_shunt_temp_adbms(const can_msg_t *message, pack_current_and_shunt_temp_adbms_t *pack_current_and_shunt_temp_adbms);
+
+typedef struct {
+ float current_target_ac;
+} ac_current_command_t;
+
+void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command);
+
+typedef struct {
+ float brake_ac_current;
+} brake_current_command_t;
+
+void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command);
+
+typedef struct {
+ float max_current_ac_target;
+} max_ac_current_command_t;
+
+void receive_max_ac_current_command(const can_msg_t *message, max_ac_current_command_t *max_ac_current_command);
+
+typedef struct {
+ float max_ac_brake_current_target;
+} max_ac_brake_current_command_t;
+
+void receive_max_ac_brake_current_command(const can_msg_t *message, max_ac_brake_current_command_t *max_ac_brake_current_command);
+
+typedef struct {
+ float max_dc_current_target;
+} max_dc_current_command_t;
+
+void receive_max_dc_current_command(const can_msg_t *message, max_dc_current_command_t *max_dc_current_command);
+
+typedef struct {
+ float max_dc_brake_current_target;
+} max_dc_brake_current_command_t;
+
+void receive_max_dc_brake_current_command(const can_msg_t *message, max_dc_brake_current_command_t *max_dc_brake_current_command);
+
+typedef struct {
+ uint8_t drive_enable;
+} drive_enable_command_t;
+
+void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
 
 
 void receive_can(const can_msg_t *msg);

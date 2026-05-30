@@ -21,6 +21,6 @@ extern can_t can2;
 #define MAGNOMETER_MSG_ID         0xAAD
 #define IMD_GENERAL_MSG_ID        0x37
 #define BMS_LIGHTNING_OKAY_MSG_ID 0x01E
-
+#define RESET_LATCHING_MSG_ID     0x510
 
 #endif /* u_can.h */

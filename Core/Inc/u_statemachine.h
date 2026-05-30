@@ -21,6 +21,7 @@ Lightning_Board_Light_Status statemachine_getState();
 
 void statemachine_handleIMDMessage(can_msg_t* message); // Handles the IMD status message. 
 void statemachine_handleBMSMessage(can_msg_t* message); // Handles the BMS status message.
+void statemachine_handleResetLatchMessage(can_msg_t *message); // Handles the RESET LATCHING FAULTS message
 int statemachine_init(void); // Start the lightning timeout timer.
  
 #endif /* u_statemachine.h */

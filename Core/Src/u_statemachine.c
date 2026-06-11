@@ -117,7 +117,6 @@ void statemachine_handleBMSMessage(can_msg_t* message) {
 }
 
 Lightning_Board_Light_Status statemachine_getState() {
-    PRINTLN_INFO("grace_period = %d", grace_period);
     /* If we haven't made first contact yet from either board, or we are still in our grace period, just return LIGHT_OFF. */
     if(!has_bms_made_contact || !has_imd_made_contact || grace_period) {
         return LIGHT_OFF;

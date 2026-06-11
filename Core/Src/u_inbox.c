@@ -9,8 +9,10 @@ void inbox_can(can_msg_t *message) {
             statemachine_handleIMDMessage(message);
             break;
         case BMS_LIGHTNING_OKAY_MSG_ID:
-            PRINTLN_INFO("can - receieved the bms lightning message");
             statemachine_handleBMSMessage(message);
+            break;
+        case RESET_LATCHING_MSG_ID:
+            statemachine_handleResetLatchMessage(message);
             break;
         default:
             PRINTLN_WARNING("Unknown Inbox Message. ID: 0x%X", message->id);

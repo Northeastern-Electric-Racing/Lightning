@@ -139,7 +139,7 @@ static thread_t _gpio_lights_thread = {
     .priority   = 0,                         /* Priority */
     .threshold  = 0,                         /* Preemption Threshold */
     .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
-    .auto_start = TX_AUTO_START,             /* Auto Start */
+    .auto_start = TX_AUTO_START,                 /* Auto Start */
     .sleep      = 10,                        /* Sleep (in ticks) */
     .function   = gpio_lights_thread         /* Thread Function */
 };

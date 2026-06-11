@@ -16,10 +16,18 @@ uint8_t can2_init(FDCAN_HandleTypeDef *hcan) {
     }
 
     /* Add filters for standard IDs */
-    uint16_t standard_ids[] = { IMD_GENERAL_MSG_ID, BMS_LIGHTNING_OKAY_MSG_ID };
-    status = can_add_filter_standard(&can2, standard_ids);
+    uint16_t standard_ids1[] = { IMD_GENERAL_MSG_ID, BMS_LIGHTNING_OKAY_MSG_ID };
+    status = can_add_filter_standard(&can2, standard_ids1);
     if(status != HAL_OK) {
-        PRINTLN_ERROR("Failed to add standard filter to can2 (Status: %d/%s, ID1: %d, ID2: %d).", status, hal_status_toString(status), standard_ids[0], standard_ids[1]);
+        PRINTLN_ERROR("Failed to add standard filter to can2 (Status: %d/%s, ID1: %d, ID2: %d).", status, hal_status_toString(status), standard_ids1[0], standard_ids1[1]);
+        return U_ERROR;
+    }
+
+    /* Add filters for standard IDs */
+    uint16_t standard_ids2[] = { RESET_LATCHING_MSG_ID, 0x0 };
+    status = can_add_filter_standard(&can2, standard_ids2);
+    if(status != HAL_OK) {
+        PRINTLN_ERROR("Failed to add standard filter to can2 (Status: %d/%s, ID1: %d, ID2: %d).", status, hal_status_toString(status), standard_ids2[0], standard_ids2[1]);
         return U_ERROR;
     }
 

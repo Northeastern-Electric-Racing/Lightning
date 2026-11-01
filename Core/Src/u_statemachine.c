@@ -94,7 +94,9 @@ void statemachine_handleIMDMessage(can_msg_t* message) {
 
     /* Update `has_imd_made_contact`, since we have made contact if this has been called. */
     has_imd_made_contact = true;
-    fault_latched = true;
+    if (!grace_period && imd_error) {
+        fault_latched = true;
+    }
 }
 
 void statemachine_handleResetLatchMessage(can_msg_t *message) {
@@ -113,7 +115,9 @@ void statemachine_handleBMSMessage(can_msg_t* message) {
     PRINTLN_INFO("bms critically faulted=%d", data.critically_faulted);
     bms_error = data.critically_faulted;
     has_bms_made_contact = true;
-    fault_latched = true;
+    if (!grace_period && bms_error) {
+        fault_latched = true;
+    }
 }
 
 Lightning_Board_Light_Status statemachine_getState() {
@@ -124,6 +128,7 @@ Lightning_Board_Light_Status statemachine_getState() {
     
     /* If either the BMS or IMD has an error, return LIGHT_RED. */
     if(fault_latched || bms_error || imd_error) {
+        PRINTLN_INFO("Fault latched: %d, BMS error: %d, IMD error: %d", fault_latched, bms_error, imd_error);
         return LIGHT_RED;
     }
 
